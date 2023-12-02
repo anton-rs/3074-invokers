@@ -22,7 +22,7 @@ contract SimpleSmartWallet {
 
 contract EIP3074_Test is Test {
     /// @dev The `MAGIC` byte for the `AUTH` message hash
-    uint8 internal constant MAGIC = 0x03;
+    uint8 internal constant MAGIC = 0x04;
 
     /// @dev The `AUTHCALL` relayer
     IAuthRelay internal relayer;
