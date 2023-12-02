@@ -5,6 +5,12 @@
 
 #define function relay(bytes signature, bytes data, address signer, address to) payable returns (bytes)
 
+/// @dev Thrown when the signature length is incorrect
+#define error BadSignatureLength()
+
+/// @dev Thrown when the `AUTH` op fails.
+#define error BadAuth()
+
 /// @notice Entry point
 #define macro MAIN() = takes (0) returns (0) {
     // Load the function selector onto the stack
@@ -39,7 +45,9 @@
     auth_step jumpi             // [signature_length]
 
     // The signature length must be 65 bytes.
-    FAIL()
+    __ERROR(BadSignatureLength) // [error_selector]
+    0x00 mstore                 // []
+    0x04 0x00 revert            //<- exit
 
     auth_step:
         // Copy the signature into memory @ 0x00
@@ -54,7 +62,9 @@
 
         // Cannot continue if the `AUTH` op fails; `AUTHCALL` always halts the context if the `authorized`
         // environment variable is not set.
-        FAIL()
+        __ERROR(BadAuth)        // [error_selector]
+        0x00 mstore             // []
+        0x04 0x00 revert        //<- exit
 
     auth_call_step:
         // Copy the data into memory @ 0x00. We clobber the signature data from above here, but that's fine. The
@@ -87,9 +97,4 @@
     bubble_success:
         returndatasize 0x00     // [ret_offset, ret_size]
         return                  //<- exit
-}
-
-/// @dev Sugar for `0x00 0x00 revert`
-#define macro FAIL() = takes (0) returns (0) {
-    0x00 0x00 revert            //<- exit
 }
