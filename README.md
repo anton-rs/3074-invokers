@@ -1,66 +1,32 @@
-## Foundry
+# `eip-3074-foundry`
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+This repository contains a patched version of [`foundry`][foundry], integrated with a fork of [`revm`][revm] / [`ethers-rs`][ethers-rs], that supports
+the [EIP-3074][eip-3074] opcodes (`AUTH` & `AUTHCALL`).
 
-Foundry consists of:
+## Patches
 
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
-
-## Documentation
-
-https://book.getfoundry.sh/
+- `revm` patch: https://github.com/clabby/revm/pull/1
+- `ethers-rs` patch: https://github.com/clabby/ethers-rs/tree/cl/call-type-3074
+- `foundry` patch: https://github.com/clabby/foundry/tree/cl/eip-3074
 
 ## Usage
 
-### Build
+**Building `forge`**
 
-```shell
-$ forge build
+First, build the patched version of `foundry`:
+
+```sh
+git submodule update --init --recursive && make build-forge-patch
 ```
 
-### Test
+This command will place the patched `forge` binary in `bin/forge`.
 
-```shell
-$ forge test
-```
+**Running Examples**
 
-### Format
+To run the examples, interact with the patched `forge` binary as normal. There is a special override for the `Prague` hardfork within the `foundry.toml` which
+will enable the `AUTH` & `AUTHCALL` opcodes.
 
-```shell
-$ forge fmt
-```
-
-### Gas Snapshots
-
-```shell
-$ forge snapshot
-```
-
-### Anvil
-
-```shell
-$ anvil
-```
-
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
-
-### Cast
-
-```shell
-$ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
-```
+[foundry]: https://github.com/foundry-rs/foundry
+[revm]: https://github.com/bluealloy/revm
+[ethers-rs]: https://github.com/gakonst/ethers-rs
+[eip-3074]: https://eips.ethereum.org/EIPS/eip-3074

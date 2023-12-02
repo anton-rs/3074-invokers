@@ -12,3 +12,6 @@ docs/
 
 # Dotenv file
 .env
+
+# Patched `forge` bin
+bin/forge

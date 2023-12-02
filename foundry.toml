@@ -2,5 +2,7 @@
 src = "src"
 out = "out"
 libs = ["lib"]
+prague = true
 
-# See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
+[fmt]
+bracket_spacing = true

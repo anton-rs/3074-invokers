@@ -1,0 +1,3 @@
+/// @title EIP3074
+/// @notice Simple wrapper to accept a signature and relay an `AUTHCALL` to a target contract.
+/// @author clabby <https://github.com/clabby>
