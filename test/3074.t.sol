@@ -9,9 +9,9 @@ interface IAuthRelay {
     /// @notice Relay an `AUTHCALL` to `to` with calldata `data` and a signature, `signature`, from `signer`
     /// @param signature The signature authenticating the `AUTHCALL`
     /// @param data The calldata of the `AUTHCALL` to relay
-    /// @param signer The creator of the `signature`
+    /// @param commit The commit of the `AUTHCALL` message that was signed by the creator of `signature`
     /// @param to The address of the contract to relay the `AUTHCALL` to
-    function relay(bytes calldata signature, bytes calldata data, address signer, address to) external;
+    function relay(bytes calldata signature, bytes calldata data, bytes32 commit, address to) external;
 }
 
 contract EIP3074_Test is Test {
@@ -29,6 +29,8 @@ contract EIP3074_Test is Test {
     error BadSignatureLength();
     /// @dev Thrown when the `AUTH` op fails.
     error BadAuth();
+    /// @dev Thrown when a `commit` has already been used.
+    error CommitUsed();
 
     function setUp() public {
         // Deploy the `AUTHCALL` relayer
@@ -54,12 +56,14 @@ contract EIP3074_Test is Test {
 
     /// @dev Tests that a basic `AUTHCALL` relay succeeds from the `actor`
     function test_basicAuthCall_succeeds() public {
-        // Sign the `AUTH` message hash.
-        bytes32 messageHash = _constructAuthMessageHash(address(relayer), 0);
-        bytes memory signature = _actorSign(actor, messageHash);
-
         // Construct the calldata for the `AUTHCALL`
         bytes memory data = abi.encodeCall(ERC20.transfer, (address(0xdead), 1 ether));
+
+        // Sign the `AUTH` message hash.
+        bytes32 commit =
+            _createSimpleCommit({ _nonce: vm.getNonce(actor.addr), _to: address(mockToken), _gas: 50_000, _data: data });
+        bytes32 messageHash = _constructAuthMessageHash(address(relayer), commit);
+        bytes memory signature = _actorSign(actor, messageHash);
 
         // Sanity check that the Relayer & `0xdead` have no tokens
         assertEq(mockToken.balanceOf(address(relayer)), 0 ether);
@@ -68,11 +72,30 @@ contract EIP3074_Test is Test {
         assertEq(mockToken.balanceOf(actor.addr), 100 ether);
 
         // Relay the `AUTHCALL`
-        relayer.relay(signature, data, actor.addr, address(mockToken));
+        relayer.relay(signature, data, commit, address(mockToken));
 
         // Assert that the `0xdead` address now has 1 token, and the actor has 99 tokens.
         assertEq(mockToken.balanceOf(address(0xdead)), 1 ether);
         assertEq(mockToken.balanceOf(actor.addr), 99 ether);
+    }
+
+    /// @dev Tests that a basic `AUTHCALL` relay fails if the same commit is used twice.
+    function test_replayAuthCall_reverts() public {
+        // Construct the calldata for the `AUTHCALL`
+        bytes memory data = abi.encodeCall(ERC20.transfer, (address(0xdead), 1 ether));
+
+        // Sign the `AUTH` message hash.
+        bytes32 commit =
+            _createSimpleCommit({ _nonce: vm.getNonce(actor.addr), _to: address(mockToken), _gas: 50_000, _data: data });
+        bytes32 messageHash = _constructAuthMessageHash(address(relayer), commit);
+        bytes memory signature = _actorSign(actor, messageHash);
+
+        // Relay the `AUTHCALL`. Should succeed.
+        relayer.relay(signature, data, commit, address(mockToken));
+
+        // Relay the `AUTHCALL`. Should fail; duplicate `commit`.
+        vm.expectRevert(CommitUsed.selector);
+        relayer.relay(signature, data, commit, address(mockToken));
     }
 
     /// @dev Tests that the relay reverts if the correct message is signed by the wrong account.
@@ -87,7 +110,7 @@ contract EIP3074_Test is Test {
 
         // The signature was for the correct message hash, but signed by the wrong account.
         vm.expectRevert(BadAuth.selector);
-        relayer.relay(signature, data, actor.addr, address(mockToken));
+        relayer.relay(signature, data, 0, address(mockToken));
     }
 
     /// @dev Tests that the relay reverts if the `AUTH` failed (i.e, bad signature.)
@@ -104,7 +127,7 @@ contract EIP3074_Test is Test {
         // The signature should be invalid; This will always revert unless we mister miyagi
         // a correct signature in the fuzz run which is damn-near impossible.
         vm.expectRevert(BadAuth.selector);
-        relayer.relay(signature, data, actor.addr, address(mockToken));
+        relayer.relay(signature, data, 0, address(mockToken));
     }
 
     /// @dev Tests that the relay reverts if the signature length is not 65
@@ -121,7 +144,15 @@ contract EIP3074_Test is Test {
 
         // The signature length should always be 65 bytes. (yparity ++ r ++ s)
         vm.expectRevert(BadSignatureLength.selector);
-        relayer.relay(_signature, data, actor.addr, address(mockToken));
+        relayer.relay(_signature, data, 0, address(mockToken));
+    }
+
+    /// @dev Helper to create a simple commit hash.
+    function _createSimpleCommit(uint256 _nonce, address _to, uint256 _gas, bytes memory _data)
+        internal
+        returns (bytes32 commit_)
+    {
+        commit_ = keccak256(abi.encodePacked(_nonce, _to, _gas, _data));
     }
 
     /// @dev Helper to sign a digest and format the signature as `abi.encodePacked(yParity, r, s)`
@@ -137,7 +168,7 @@ contract EIP3074_Test is Test {
     }
 
     /// @dev Helper to construct the `AUTH` message hash for signing by the `actor`.
-    function _constructAuthMessageHash(address _to, uint256 _commit) internal view returns (bytes32 hash_) {
-        hash_ = keccak256(abi.encodePacked(MAGIC, uint256(block.chainid), uint256(uint160(address(_to))), _commit));
+    function _constructAuthMessageHash(address _relayer, bytes32 _commit) internal view returns (bytes32 hash_) {
+        hash_ = keccak256(abi.encodePacked(MAGIC, uint256(block.chainid), uint256(uint160(address(_relayer))), _commit));
     }
 }
