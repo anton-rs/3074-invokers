@@ -7,6 +7,13 @@ build-forge-patch:
 		cp target/release/forge ../bin/forge
 	@echo "Done, patched forge binary is located in `bin/forge` relative to the project root"
 
+.PHONY: install-huff
+install-huff:
+	@echo "Installing huff..."
+	@curl -L get.huff.sh | bash
+	@huffup
+	@echo "Done!"
+
 .PHONY: test
 test:
 	@[[ ! -a ./bin/forge ]] && make build-forge-patch || true

@@ -21,6 +21,12 @@ git submodule update --init --recursive && make build-forge-patch
 
 This command will place the patched `forge` binary in `bin/forge`.
 
+**Installing `huffc`**
+
+```sh
+make install-huff
+```
+
 **Running Examples**
 
 To run the examples, interact with the patched `forge` binary as normal. There is a special override for the `Prague` hardfork within the `foundry.toml` which
