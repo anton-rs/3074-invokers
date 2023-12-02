@@ -63,6 +63,10 @@ contract EIP3074_Test is Test {
         // Construct the calldata for the `AUTHCALL`
         bytes memory data = abi.encodeCall(ERC20.transfer, (address(0xdead), 1 ether));
 
+        // Sanity check that the Relayer & `0xdead` have no tokens
+        assertEq(mockToken.balanceOf(address(relayer)), 0 ether);
+        assertEq(mockToken.balanceOf(address(0xdead)), 0 ether);
+
         // Relay the `AUTHCALL`
         relayer.relay(signature, data, actor.addr, address(mockToken));
 

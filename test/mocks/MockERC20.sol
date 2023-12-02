@@ -9,12 +9,12 @@ contract MockERC20 is ERC20 {
     }
 
     /// @dev Returns the name of the token.
-    function name() public view override returns (string memory) {
+    function name() public pure override returns (string memory) {
         return "MockERC20";
     }
 
     /// @dev Returns the symbol of the token.
-    function symbol() public view override returns (string memory) {
+    function symbol() public pure override returns (string memory) {
         return "MCK";
     }
 }
