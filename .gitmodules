@@ -4,3 +4,6 @@
 [submodule "forge-3074-patch"]
 	path = forge-3074-patch
 	url = https://github.com/clabby/foundry
+[submodule "lib/solady"]
+	path = lib/solady
+	url = https://github.com/vectorized/solady
