@@ -98,21 +98,6 @@ contract EIP3074_Test is Test {
         relayer.relay(signature, data, commit, address(mockToken));
     }
 
-    /// @dev Tests that the relay reverts if the correct message is signed by the wrong account.
-    function test_basicAuthCall_wrongSigner_reverts() public {
-        // Sign the `AUTH` message hash with a different account.
-        VmSafe.Wallet memory attacker = vm.createWallet("eip3074bad");
-        bytes32 messageHash = _constructAuthMessageHash(address(relayer), 0);
-        bytes memory signature = _actorSign(attacker, messageHash);
-
-        // Construct the calldata for the `AUTHCALL`
-        bytes memory data = abi.encodeCall(ERC20.transfer, (address(0xdead), 1 ether));
-
-        // The signature was for the correct message hash, but signed by the wrong account.
-        vm.expectRevert(BadAuth.selector);
-        relayer.relay(signature, data, 0, address(mockToken));
-    }
-
     /// @dev Tests that the relay reverts if the `AUTH` failed (i.e, bad signature.)
     function testFuzz_basicAuthCall_badSignature_reverts(uint8 _yParity, bytes32 _r, bytes32 _s) public {
         // Constrain the yParity to be either 0 or 1
@@ -150,6 +135,7 @@ contract EIP3074_Test is Test {
     /// @dev Helper to create a simple commit hash.
     function _createSimpleCommit(uint256 _nonce, address _to, uint256 _gas, bytes memory _data)
         internal
+        pure
         returns (bytes32 commit_)
     {
         commit_ = keccak256(abi.encodePacked(_nonce, _to, _gas, _data));

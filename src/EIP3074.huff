@@ -54,9 +54,9 @@
     auth_step jumpi             // []
 
     // The signature length must be 65 bytes.
-    __ERROR(BadSignatureLength) // [error_selector]
+    0xd7bad83f                  // [`BadSignatureLength()`]
     0x00 mstore                 // []
-    0x04 0x00 revert            //<- exit
+    0x04 0x1C revert            //<- exit
 
     auth_step:
         0x44 calldataload       // [commit]
@@ -66,9 +66,9 @@
         iszero auth_step_cont   // [auth_step_cont_jumpdest, !is_used, commit]
         jumpi                   // [commit]
 
-        __ERROR(CommitUsed)     // [error_selector]
+        0x5c9f11c9              // [`CommitUsed()`]
         0x00 mstore             // []
-        0x04 0x00 revert        //<- exit
+        0x04 0x1C revert        //<- exit
 
         auth_step_cont:
             // Mark the commit as used
@@ -97,9 +97,9 @@
 
             // Cannot continue if the `AUTH` op fails; `AUTHCALL` always halts the context if the `authorized`
             // environment variable is not set.
-            __ERROR(BadAuth)        // [error_selector]
+            0xd386ef3e              // [`BadAuth()`]
             0x00 mstore             // []
-            0x04 0x00 revert        //<- exit
+            0x04 0x1C revert        //<- exit
 
     auth_call_step:
         // Copy the data into memory @ 0x00. We clobber the signature data from above here, but that's fine. The
