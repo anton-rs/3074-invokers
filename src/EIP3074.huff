@@ -3,7 +3,7 @@
 /// @author clabby <https://github.com/clabby>
 /// @dev TODO: Use fork of Huff w/ `AUTH` / `AUTHCALL` support rather than inserting ops manually.
 
-#define function relay(bytes signature, bytes data, address signer, address to) payable returns (bytes)
+#define function relay(bytes signature, bytes data, address signer, address to) payable returns ()
 
 /// @dev Thrown when the signature length is incorrect
 #define error BadSignatureLength()

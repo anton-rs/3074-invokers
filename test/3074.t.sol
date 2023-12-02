@@ -11,10 +11,7 @@ interface IAuthRelay {
     /// @param data The calldata of the `AUTHCALL` to relay
     /// @param signer The creator of the `signature`
     /// @param to The address of the contract to relay the `AUTHCALL` to
-    /// @return The return data of the `AUTHCALL`
-    function relay(bytes calldata signature, bytes calldata data, address signer, address to)
-        external
-        returns (bytes memory);
+    function relay(bytes calldata signature, bytes calldata data, address signer, address to) external;
 }
 
 contract EIP3074_Test is Test {
@@ -42,9 +39,12 @@ contract EIP3074_Test is Test {
         bytes memory relayerInitCode = vm.ffi(command);
         assembly ("memory-safe") {
             let addr := create(0x00, add(relayerInitCode, 0x20), mload(relayerInitCode))
-            if iszero(extcodesize(addr)) { revert(0, 0) }
+            if iszero(extcodesize(addr)) {
+                revert(0, 0)
+            }
             sstore(relayer.slot, addr)
         }
+        vm.label(address(relayer), "AuthRelay");
 
         // Set up the dummy actor
         actor = vm.createWallet("eip3074gud");
@@ -73,6 +73,7 @@ contract EIP3074_Test is Test {
 
     /// @dev Tests that the relay reverts if the `AUTH` failed (i.e, bad signature.)
     function testFuzz_basicAuthCall_badSignature_reverts(uint8 _yParity, bytes32 _r, bytes32 _s) public {
+        // Constrain the yParity to be either 0 or 1
         _yParity = _yParity % 2 == 0 ? 0x00 : 0x01;
 
         // Generate a pseudo-random signature
@@ -118,6 +119,11 @@ contract EIP3074_Test is Test {
 
     /// @dev Helper to construct the `AUTH` message hash for signing by the `actor`.
     function _constructAuthMessageHash(address _to, uint256 _commit) internal view returns (bytes32 hash_) {
-        hash_ = keccak256(abi.encodePacked(MAGIC, uint256(block.chainid), uint256(uint160(address(_to))), _commit));
+        hash_ = keccak256(abi.encodePacked(
+            MAGIC,
+            uint256(block.chainid),
+            uint256(uint160(address(_to))),
+            _commit
+        ));
     }
 }
