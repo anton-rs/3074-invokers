@@ -5,7 +5,8 @@ libs = ["lib"]
 ffi = true
 prague = true
 remappings = [
-  "forge-std=lib/forge-std/src"
+  "forge-std/=lib/forge-std/src/",
+  "solady/=lib/solady/src/",
 ]
 
 [fmt]

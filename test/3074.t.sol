@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import { Test, console } from "forge-std/Test.sol";
 import { VmSafe } from "forge-std/Vm.sol";
+import { MockERC20, ERC20 } from "test/mocks/MockERC20.sol";
 
 interface IAuthRelay {
     /// @notice Relay an `AUTHCALL` to `to` with calldata `data` and a signature, `signature`, from `signer`
@@ -14,20 +15,14 @@ interface IAuthRelay {
     function relay(bytes calldata signature, bytes calldata data, address signer, address to) external returns (bytes memory);
 }
 
-contract SimpleSmartWallet {
-    function act() public {
-        // TODO
-    }
-}
-
 contract EIP3074_Test is Test {
     /// @dev The `MAGIC` byte for the `AUTH` message hash
     uint8 internal constant MAGIC = 0x04;
 
     /// @dev The `AUTHCALL` relayer
     IAuthRelay internal relayer;
-    /// @dev A sample smart wallet for the `AUTHCALL` relayer to call
-    SimpleSmartWallet internal wallet;
+    /// @dev A mock ERC-20 token used for testing.
+    MockERC20 internal mockToken;
     /// @dev The `AUTHCALL` relayer
     VmSafe.Wallet internal actor;
 
@@ -46,24 +41,29 @@ contract EIP3074_Test is Test {
             sstore(relayer.slot, addr)
         }
 
-        // Deploy the simple smart wallet
-        wallet = new SimpleSmartWallet();
-
         // Set up the dummy actor
         actor = vm.createWallet("eip3074gud");
+
+        // Deploy the mock ERC-20 token and send 100 tokens to the actor
+        mockToken = new MockERC20();
+        mockToken.transfer(actor.addr, 100 ether);
     }
 
     /// @dev Tests that a basic `AUTHCALL` relay succeeds from the `actor`
     function test_basicAuthCall_succeeds() public {
         // Sign the `AUTH` message hash.
-        bytes32 messageHash = _constructAuthMessageHash(0);
+        bytes32 messageHash = _constructAuthMessageHash(address(relayer), 0);
         bytes memory signature = _actorSign(messageHash);
 
         // Construct the calldata for the `AUTHCALL`
-        bytes memory data = abi.encodeCall(SimpleSmartWallet.act, ());
+        bytes memory data = abi.encodeCall(ERC20.transfer, (address(0xdead), 1 ether));
 
         // Relay the `AUTHCALL`
-        relayer.relay(signature, data, actor.addr, address(wallet));
+        relayer.relay(signature, data, actor.addr, address(mockToken));
+
+        // Assert that the `0xdead` address now has 1 token, and the actor has 99 tokens.
+        assertEq(mockToken.balanceOf(address(0xdead)), 1 ether);
+        assertEq(mockToken.balanceOf(actor.addr), 99 ether);
     }
 
     /// @dev Helper to sign a digest and format the signature as `abi.encodePacked(yParity, r, s)`
@@ -79,11 +79,11 @@ contract EIP3074_Test is Test {
     }
 
     /// @dev Helper to construct the `AUTH` message hash for signing by the `actor`.
-    function _constructAuthMessageHash(uint256 _commit) internal view returns (bytes32 hash_) {
+    function _constructAuthMessageHash(address _to, uint256 _commit) internal view returns (bytes32 hash_) {
         hash_ = keccak256(abi.encodePacked(
             MAGIC,
             uint256(block.chainid),
-            uint256(uint160(address(relayer))),
+            uint256(uint160(address(_to))),
             _commit
         ));
     }
