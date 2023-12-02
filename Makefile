@@ -3,7 +3,7 @@ build-forge-patch:
 	@echo "Building forge patch..."
 	@cd forge-3074-patch && \
 		cargo build --bin forge --release && \
-		mkdir -p bin && \
+		mkdir -p ../bin && \
 		cp target/release/forge ../bin/forge
 	@echo "Done, patched forge binary is located in `bin/forge` relative to the project root"
 

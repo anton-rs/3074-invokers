@@ -1,3 +1,95 @@
-/// @title EIP3074
-/// @notice Simple wrapper to accept a signature and relay an `AUTHCALL` to a target contract.
+/// @title EIP3074 Relayer
+/// @notice Simple wrapper to accept a signature + call arguments and relay an `AUTHCALL` to a target contract.
 /// @author clabby <https://github.com/clabby>
+/// @dev TODO: Use fork of Huff w/ `AUTH` / `AUTHCALL` support rather than inserting ops manually.
+
+#define function relay(bytes signature, bytes data, address signer, address to) payable returns (bytes)
+
+/// @notice Entry point
+#define macro MAIN() = takes (0) returns (0) {
+    // Load the function selector onto the stack
+    pc calldataload 0xE0 shr    // [selector]
+
+    // Function dispatch (Incase we want to extend the relayer for other test functions)
+    dup1 __FUNC_SIG(relay) eq   // [selector == relay, selector]
+    relay jumpi                 // [selector]
+
+    // Revert if no selectors match
+    0x00 0x00 revert            //<- exit
+
+    relay:
+        AUTH_RELAY()            // []
+}
+
+/// @notice Relay an `AUTHCALL` to a target contract.
+/// @dev Expected calldata layout:
+///      - [0x00-0x04]   - Function selector ("relay(bytes signature, bytes data, address signer, address to)")
+///      - [0x04-0x24]   - Pointer to `signature` length
+///      - [0x24-0x44]   - Pointer to `data` length
+///      - [0x44-0x64]   - `signer` address
+///      - [0x64-0x84]   - `to` address
+///      - [0x84-0xA4]   - `signature length` (should *always* be 65)
+///      - [0xA4:0x104]  - `signature` contents
+///      - [0x104:0x124] - `data length`
+///      - [0x124:]      - `data` contents
+#define macro AUTH_RELAY() = takes (0) returns (0) {
+    // Check the signature length prior to invoking `AUTH`
+    0x84 calldataload           // [signature_length]
+    dup1 0x41 eq                // [signature_length == 65, signature_length]
+    auth_step jumpi             // [signature_length]
+
+    // The signature length must be 65 bytes.
+    FAIL()
+
+    auth_step:
+        // Copy the signature into memory @ 0x00
+        dup1 0xA4               // [signature_offset_cd, signature_length, signature_length]
+        0x00 calldatacopy       // [signature_length]
+
+        0x00                    // [signature_offset_mem, signature_length]
+        0x44 calldataload       // [signer_addr, signature_offset_mem, signature_length]
+        // Invoke `AUTH` manually - see TODO at top level comment.
+        __VERBATIM(0xF6)        // [success]
+        auth_call_step jumpi    // []
+
+        // Cannot continue if the `AUTH` op fails; `AUTHCALL` always halts the context if the `authorized`
+        // environment variable is not set.
+        FAIL()
+
+    auth_call_step:
+        // Copy the data into memory @ 0x00. We clobber the signature data from above here, but that's fine. The
+        // fanciest GC is assembly.
+        0x104 calldataload      // [data_length]
+        dup1 0x124              // [data_offset_cd, data_length, data_length]
+        0x00 calldatacopy       // [data_length]
+
+        0x00 0x00               // [ret_offset, ret_length, data_length]
+        swap2                   // [data_length, ret_offset, ret_length]
+        0x00 0x00               // [value_ext, data_offset, data_length, ret_offset, ret_length]
+        callvalue               // [value, value_ext, data_offset, data_length, ret_offset, ret_length]
+        0x64 calldataload       // [to, value, value_ext, data_offset, data_length, ret_offset, ret_length]
+        gas                     // [gas, to, value, value_ext, data_offset, data_length, ret_offset, ret_length]
+        // Invoke `AUTHCALL` manually - see TODO at top level comment.
+        __VERBATIM(0xF7)        // [success]
+
+        // Copy returndata into memory. Fine to clobber the calldata from above here, we're done w/ it.
+        returndatasize          // [ret_size, success]
+        0x00 0x00               // [dest_offset, src_offset, ret_size, success]
+        returndatacopy          // [success]
+        
+        // If the call succeeded, bubble up the return data w/ the `RETURN` opcode.
+        bubble_success jumpi    // []
+
+        // If the call reverted, bubble up the return data w/ the `REVERT` opcode.
+        returndatasize 0x00     // [ret_offset, ret_size]
+        revert                  //<- exit
+
+    bubble_success:
+        returndatasize 0x00     // [ret_offset, ret_size]
+        return                  //<- exit
+}
+
+/// @dev Sugar for `0x00 0x00 revert`
+#define macro FAIL() = takes (0) returns (0) {
+    0x00 0x00 revert            //<- exit
+}
