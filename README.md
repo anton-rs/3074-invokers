@@ -5,10 +5,15 @@ the [EIP-3074][eip-3074] opcodes (`AUTH` & `AUTHCALL`).
 
 ## Patches
 
+> **NOTE**:
+> These are *patches*, don't spin up a production system with these and expect security.
+
 - `revm` patch: https://github.com/clabby/revm/pull/1
+    - See review comments. Incomplete atm, but functionally works as expected.
 - `ethers-rs` patch: https://github.com/clabby/ethers-rs/tree/cl/call-type-3074
 - `foundry` patch: https://github.com/clabby/foundry/tree/cl/eip-3074
 - `solc` patch: https://github.com/clabby/solidity/tree/cl/eip-3074
+- `reth` patch: https://github.com/paradigmxyz/reth/tree/cl/eip-3074
 
 ## Usage
 
@@ -33,7 +38,7 @@ make build-solc-patch
 
 **Installing `huffc`**
 
-The [`huff`] version of the `EIP-3074` invoker requires `huffc` to be installed.
+The [`huff`][huff-rs] version of the `EIP-3074` invoker requires `huffc` to be installed.
 
 ```sh
 make install-huff
@@ -49,3 +54,4 @@ will enable the `AUTH` & `AUTHCALL` opcodes, and the `foundry.toml` specifies th
 [ethers-rs]: https://github.com/gakonst/ethers-rs
 [eip-3074]: https://eips.ethereum.org/EIPS/eip-3074
 [solc]: https://github.com/ethereum/solidity
+[huff-rs]: https://github.com/huff-language/huff-rs
