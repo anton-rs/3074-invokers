@@ -8,6 +8,7 @@ remappings = [
   "forge-std/=lib/forge-std/src/",
   "solady/=lib/solady/src/",
 ]
+solc = "bin/solc"
 
 [fmt]
 bracket_spacing = true
