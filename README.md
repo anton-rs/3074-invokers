@@ -36,6 +36,31 @@ Next, build the patched version of `solc` (this will also take a while):
 make build-solc-patch
 ```
 
+This patch supports the following semantics:
+```solidity
+function example() public {
+    // AUTHCALL by `address` member access
+    address(0xbeefbabe).authcall(hex"...");
+
+    assembly {
+        // AUTH
+        let authSuccess := auth(<authorized>, <args_offset_mem>, <args_length>)
+
+        // AUTHCALL
+        let authCallSuccess := authcall(
+            <gas>,
+            <to_addr>,
+            <value>, // NOTE: This is currently sent from the Invoker contract, NOT the `authorized` account.
+            <valueExt>, // Must always be `0` per the current 3074 spec, reserved for future use.
+            <args_offset_mem>,
+            <args_length>,
+            <ret_offset_mem>,
+            <ret_length>
+        )
+    }
+}
+```
+
 **Installing `huffc`**
 
 The [`huff`][huff-rs] version of the `EIP-3074` invoker requires `huffc` to be installed.
