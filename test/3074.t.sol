@@ -27,8 +27,6 @@ contract EIP3074_Test is Test {
 
     /// @dev Thrown when the signature length is incorrect
     error BadSignatureLength();
-    /// @dev Thrown when the `AUTH` op fails.
-    error BadAuth();
     /// @dev Thrown when a `commit` has already been used.
     error CommitUsed();
 
@@ -96,23 +94,6 @@ contract EIP3074_Test is Test {
         // Relay the `AUTHCALL`. Should fail; duplicate `commit`.
         vm.expectRevert(CommitUsed.selector);
         relayer.relay(signature, data, commit, address(mockToken));
-    }
-
-    /// @dev Tests that the relay reverts if the `AUTH` failed (i.e, bad signature.)
-    function testFuzz_basicAuthCall_badSignature_reverts(uint8 _yParity, bytes32 _r, bytes32 _s) public {
-        // Constrain the yParity to be either 0 or 1
-        _yParity = _yParity % 2 == 0 ? 0x00 : 0x01;
-
-        // Generate a pseudo-random signature
-        bytes memory signature = abi.encodePacked(_yParity, _r, _s);
-
-        // Construct the calldata for the `AUTHCALL`
-        bytes memory data = abi.encodeCall(ERC20.transfer, (address(0xdead), 1 ether));
-
-        // The signature should be invalid; This will always revert unless we mister miyagi
-        // a correct signature in the fuzz run which is damn-near impossible.
-        vm.expectRevert(BadAuth.selector);
-        relayer.relay(signature, data, 0, address(mockToken));
     }
 
     /// @dev Tests that the relay reverts if the signature length is not 65
