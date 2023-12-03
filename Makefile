@@ -1,3 +1,5 @@
+all: build-forge-patch build-solc-patch
+
 .PHONY: build-forge-patch
 build-forge-patch:
 	@echo "Building forge patch..."
@@ -5,7 +7,19 @@ build-forge-patch:
 		cargo build --bin forge --release && \
 		mkdir -p ../bin && \
 		cp target/release/forge ../bin/forge
-	@echo "Done, patched forge binary is located in `bin/forge` relative to the project root"
+	@echo "Done, patched forge binary is located at `bin/forge` relative to the project root"
+
+.PHONY: build-solc-patch
+build-solc-patch:
+	@echo "Building solc patch..."
+	@cd solidity && \
+		mkdir -p build && \
+		cd build && \
+		cmake .. && \
+		make && \
+		mkdir -p ../../bin && \
+		cp solc/solc ../../bin/solc
+	@echo "Done, patched solc binary is located at `bin/solc` relative to the project root"
 
 .PHONY: install-huff
 install-huff:
