@@ -35,7 +35,7 @@ contract EIP3074_Test is Test {
         string[] memory command = new string[](3);
         command[0] = "huffc";
         command[1] = "-b";
-        command[2] = "src/EIP3074.huff";
+        command[2] = "src/AsmInvoker.huff";
         bytes memory relayerInitCode = vm.ffi(command);
         assembly ("memory-safe") {
             let addr := create(0x00, add(relayerInitCode, 0x20), mload(relayerInitCode))
