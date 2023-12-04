@@ -76,6 +76,4 @@ contract BatchInvokerTest is Test {
         vm.expectRevert(abi.encodeWithSelector(BatchInvoker.ExtraValue.selector));
         invoker.execute{ value: 2 ether }(batch, v, r, s);
     }
-
-    // TODO: test that auth returns authority address
 }
