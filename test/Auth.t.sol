@@ -17,6 +17,7 @@ contract AuthHarness is Auth {
 
 contract AuthTest is Test {
     AuthHarness public target;
+    VmSafe.Wallet public authority;
 
     function setUp() public {
         target = new AuthHarness();
@@ -36,6 +37,7 @@ contract AuthTest is Test {
 
     // fuzz: auth succeeds and returns correct signer
     function testFuzz_Auth(bytes32 commit, uint256 privateKey) external {
+        vm.assume(privateKey > 0 && privateKey < 115792089237316195423570985008687907852837564279074904382605163141518161494337);
         bytes32 digest = target.getDigest(commit);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
         address recovered = target.authHarness(commit, v, r, s);
@@ -43,7 +45,7 @@ contract AuthTest is Test {
     }
 
     // auth fails if you pass the wrong commit for the signature
-    function testAuth() external {
+    function testBadAuth() external {
         bytes32 commit = keccak256("eip-3074 4ever");
         bytes32 wrongCommit = keccak256("abstraction h8er");
         bytes32 digest = target.getDigest(commit);
@@ -55,6 +57,6 @@ contract AuthTest is Test {
     // authcall without auth reverts
     function testAuthCall() external {
         vm.expectRevert();
-        authCall(address(0), "0x", 0, 0);
+        target.authCallHarness(address(0), "0x", 0, 0);
     }
 }
