@@ -28,11 +28,7 @@ abstract contract Auth {
     /// @notice call AUTH opcode with a given a commitment + signature
     /// @param commit - any 32-byte value used to commit to transaction validity conditions
     /// @dev (v, r, s) are interpreted as an ECDSA signature on the secp256k1 curve over getDigest(commit)
-    /// @return authority - the signer of the digest recovered from the signature
-    function auth(bytes32 commit, uint8 v, bytes32 r, bytes32 s) internal view returns (address authority) {
-        bytes32 digest = getDigest(commit);
-        // derive authority from the signature + digest
-        authority = ecrecover(digest, v, r, s);
+    function auth(address authority, bytes32 commit, uint8 v, bytes32 r, bytes32 s) internal {
         bytes memory authArgs = abi.encodePacked(yParity(v), r, s, commit);
         assembly {
             let success := auth(authority, add(authArgs, 0x20), mload(authArgs))

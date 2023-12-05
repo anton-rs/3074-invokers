@@ -46,7 +46,7 @@ contract BatchInvokerTest is Test {
     function test_authCall() public {
         (uint8 v, bytes32 r, bytes32 s) = constructAndSignBatch(0, 0);
         // this will call Callee.expectSender(authority)
-        invoker.execute(batch, v, r, s);
+        invoker.execute(authority.addr, batch, v, r, s);
     }
 
     // invalid nonce fails
@@ -54,28 +54,28 @@ contract BatchInvokerTest is Test {
         // 1 is invalid starting nonce
         (uint8 v, bytes32 r, bytes32 s) = constructAndSignBatch(1, 0);
         vm.expectRevert(abi.encodeWithSelector(BatchInvoker.InvalidNonce.selector, authority.addr, 0, 1));
-        invoker.execute(batch, v, r, s);
+        invoker.execute(authority.addr, batch, v, r, s);
     }
 
     function test_authCallWithValue() public {
         (uint8 v, bytes32 r, bytes32 s) = constructAndSignBatch(0, 1 ether);
         // this will call Callee.expectSender(authority)
-        invoker.execute{ value: 1 ether }(batch, v, r, s);
+        invoker.execute{ value: 1 ether }(authority.addr, batch, v, r, s);
     }
 
     // fails if too little value to pass to sub-call
     function test_tooLittleValue() public {
         (uint8 v, bytes32 r, bytes32 s) = constructAndSignBatch(0, 1 ether);
         vm.expectRevert();
-        invoker.execute{ value: 0.5 ether }(batch, v, r, s);
+        invoker.execute{ value: 0.5 ether }(authority.addr, batch, v, r, s);
     }
 
     // fails if too much value to pass to sub-call
     function test_tooMuchValue() public {
         (uint8 v, bytes32 r, bytes32 s) = constructAndSignBatch(0, 1 ether);
         vm.expectRevert(abi.encodeWithSelector(BatchInvoker.ExtraValue.selector));
-        invoker.execute{ value: 2 ether }(batch, v, r, s);
+        invoker.execute{ value: 2 ether }(authority.addr, batch, v, r, s);
     }
 
-    // TODO: test that auth returns authority address
+    // TODO: if subcall reverts, it reverts with the right return data (bubbles up the error)
 }

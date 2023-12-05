@@ -64,9 +64,9 @@ contract BatchInvoker is Auth {
     /// @notice execute a Batch of Calls on behalf of a signing authority using AUTH and AUTHCALL
     /// @param batch - the Batch of Calls that the authority wishes to be executed on their behalf
     /// @dev (v, r, s) are interpreted as an ECDSA signature on the secp256k1 curve over getDigest(batch)
-    function execute(Batch calldata batch, uint8 v, bytes32 r, bytes32 s) public payable {
+    function execute(address authority, Batch calldata batch, uint8 v, bytes32 r, bytes32 s) public payable {
         // AUTH this contract to execute the Batch on behalf of the authority
-        address authority = auth(getCommit(batch), v, r, s);
+        auth(authority, getCommit(batch), v, r, s);
         // validate the nonce & increment
         uint256 expectedNonce = nextNonce[authority]++;
         if (expectedNonce != batch.nonce) revert InvalidNonce(authority, expectedNonce, batch.nonce);
