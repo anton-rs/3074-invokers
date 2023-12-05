@@ -42,3 +42,8 @@ build:
 fmt:
 	@[[ ! -a ./bin/forge ]] && make build-forge-patch || true
 	@./bin/forge fmt
+
+.PHONY: snapshot
+snapshot:
+	@[[ ! -a ./bin/forge ]] && make build-forge-patch || true
+	@./bin/forge snapshot
