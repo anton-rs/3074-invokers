@@ -17,9 +17,7 @@ contract AuthHarness is Auth {
         return authSimple(authority, commit, v, r, s);
     }
 
-    function authCallHarness(address to, bytes memory data, uint256 value, uint256 gasLimit)
-        external
-    {
+    function authCallHarness(address to, bytes memory data, uint256 value, uint256 gasLimit) external {
         authCall(to, data, value, gasLimit);
     }
 }
