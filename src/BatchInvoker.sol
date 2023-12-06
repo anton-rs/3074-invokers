@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import { Auth } from "src/Auth.sol";
+import { MultiSendAuthCallOnly } from "src/MultiSendAuthCallOnly.sol";
 
 /// @title BatchInvoker
 /// @author Anna Carroll <https://github.com/anna-carroll/3074>
@@ -13,73 +14,58 @@ import { Auth } from "src/Auth.sol";
 /// @dev BatchInvoker enables multi-transaction flows for EOAs,
 ///      such as performing an ERC-20 approve & transfer with just one signature.
 ///      It also natively enables gas sponsored transactions.
-contract BatchInvoker is Auth {
-    /// @notice a Batch is an array of calls which will be executed behalf of an authority.
-    /// @dev authority signs a commitment to the Batch, enabling it to be executed by the BatchInvoker using AUTHCALL
-    struct Batch {
-        uint256 nonce;
-        Call[] calls;
-    }
-
-    /// @notice a Call contains transaction execution information for a single sub-call within a Batch.
-    /// @dev The fields are relatively self-explanatory:
-    ///      - to - the address to call.
-    ///      - data - the encoded calldata passed to the call.
-    ///      - value - the ether value forwarded to the call.
-    ///      - gasLimit - the gas limit set for the call.
-    struct Call {
-        address to;
-        bytes data;
-        uint256 value;
-        uint256 gasLimit;
-    }
-
+contract BatchInvoker is Auth, MultiSendAuthCallOnly {
     /// @notice authority => next valid nonce
     mapping(address => uint256) public nextNonce;
 
     /// @notice thrown when a Batch is executed with an invalid nonce
     /// @param authority - the signing authority
-    /// @param expected - the expected, valid nonce
     /// @param attempted - the attempted, invalid nonce
-    error InvalidNonce(address authority, uint256 expected, uint256 attempted);
+    error InvalidNonce(address authority, uint256 attempted);
 
     /// @notice thrown when a Batch is executed with a larger `msg.value` than the sum of each sub-call's `value`
     error ExtraValue();
 
-    /// @notice produce a signable digest that empowers this BatchInvoker to execute the Batch on behalf of the signing authority using AUTHCALL
-    /// @param batch - the Batch of Calls that the authority wishes to be executed on their behalf
-    /// @return digest - the payload that the authority should sign in order to empower this BatchInvoker to execute the Batch using AUTHCALL
-    function getDigest(Batch calldata batch) external view returns (bytes32 digest) {
-        digest = getDigest(getCommit(batch));
+    /// @notice produce a digest to sign that authorizes this contract
+    ///         to execute the transactions using AUTHCALL
+    /// @param nonce - see `execute` docs
+    /// @param transactions - see `execute` docs
+    /// @return digest - the payload that the authority should sign
+    ///         in order to authorize the transactions using AUTHCALL
+    function getDigest(uint256 nonce, bytes memory transactions) external view returns (bytes32 digest) {
+        digest = getDigest(getCommit(nonce, transactions));
     }
 
     /// @notice produce a hashed commitment to an Batch to be executed using AUTHCALL
-    /// @param batch - the Batch of Calls that the authority wishes to be executed on their behalf
-    /// @return commit - the hashed commitment to the encoded Batch
-    /// @dev commit is a key parameter to the signed digest
-    function getCommit(Batch calldata batch) public pure returns (bytes32 commit) {
-        commit = keccak256(abi.encode(batch));
+    /// @param nonce - see `execute` docs
+    /// @param transactions - see `execute` docs
+    /// @return commit - commitment to the batch of transactions
+    /// @dev commit is a security-critical parameter to the signed digest for `auth`
+    function getCommit(uint256 nonce, bytes memory transactions) public pure returns (bytes32 commit) {
+        commit = keccak256(abi.encodePacked(nonce, transactions));
     }
 
     /// @notice execute a Batch of Calls on behalf of a signing authority using AUTH and AUTHCALL
-    /// @param batch - the Batch of Calls that the authority wishes to be executed on their behalf
+    /// @param authority - the signer authorizing the AUTHCALL
+    /// @param nonce - unique sequential identifier for the bath of transactions
+    /// @param transactions Encoded transactions. Each transaction is encoded as a packed bytes of
+    ///        `operation` has to be uint8(2) in this version (=> 1 byte),
+    ///        `to` as a address (=> 20 bytes),
+    ///        `value` as a uint256 (=> 32 bytes),
+    ///        `data length` as a uint256 (=> 32 bytes),
+    ///        `data` as bytes.
     /// @dev (v, r, s) are interpreted as an ECDSA signature on the secp256k1 curve over getDigest(batch)
-    function execute(address authority, Batch calldata batch, uint8 v, bytes32 r, bytes32 s) public payable {
-        // AUTH this contract to execute the Batch on behalf of the authority
-        auth(authority, getCommit(batch), v, r, s);
+    function execute(address authority, uint256 nonce, bytes memory transactions, uint8 v, bytes32 r, bytes32 s)
+        public
+        payable
+    {
         // validate the nonce & increment
-        uint256 expectedNonce = nextNonce[authority]++;
-        if (expectedNonce != batch.nonce) revert InvalidNonce(authority, expectedNonce, batch.nonce);
-        // AUTHCALL each call in the batch
-        for (uint256 i; i < batch.calls.length; i++) {
-            exec(batch.calls[i]);
-        }
+        if (nonce != nextNonce[authority]++) revert InvalidNonce(authority, nonce);
+        // AUTH this contract to execute the Batch on behalf of the authority
+        auth(authority, getCommit(nonce, transactions), v, r, s);
+        // multiSend the transactions using AUTHCALL
+        multiSend(transactions);
         // ensure that all value passed to the transaction was passed on to sub-calls (no leftover value in BatchInvoker contract)
         if (address(this).balance != 0) revert ExtraValue();
-    }
-
-    /// @notice execute a single Call. revert if it fails.
-    function exec(Call memory call) internal {
-        authCall(call.to, call.data, call.value, call.gasLimit);
     }
 }
