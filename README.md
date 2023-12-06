@@ -80,3 +80,10 @@ will enable the `AUTH` & `AUTHCALL` opcodes, and the `foundry.toml` specifies th
 [eip-3074]: https://eips.ethereum.org/EIPS/eip-3074
 [solc]: https://github.com/ethereum/solidity
 [huff-rs]: https://github.com/huff-language/huff-rs
+
+## EIP-3074 References
+
+- https://eips.ethereum.org/EIPS/eip-3074
+- https://hackmd.io/@matt/note-on-3074
+- https://github.com/clabby/eip-3074-foundry
+- https://ethresear.ch/t/a-brief-note-on-the-future-of-accounts/12395
