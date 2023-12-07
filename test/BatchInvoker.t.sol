@@ -28,7 +28,11 @@ contract BatchInvokerTest is Test {
         vm.label(authority.addr, "authority");
     }
 
-    function constructAndSignTransaction(uint256 value) internal view returns (uint8 v, bytes32 r, bytes32 s, bytes memory transactions) {
+    function constructAndSignTransaction(uint256 value)
+        internal
+        view
+        returns (uint8 v, bytes32 r, bytes32 s, bytes memory transactions)
+    {
         bytes memory data = abi.encodeWithSelector(Callee.expectSender.selector, address(authority.addr));
         uint8 identifier = 2;
         transactions = abi.encodePacked(identifier, address(callee), value, data.length, data);
@@ -55,8 +59,8 @@ contract BatchInvokerTest is Test {
         (uint8 v, bytes32 r, bytes32 s, bytes memory transactions) = constructAndSignTransaction(0);
         address authrty = authority.addr;
         uint256 n = nonce;
-        vm.resumeGasMetering();
         vm.expectRevert(abi.encodeWithSelector(BatchInvoker.InvalidNonce.selector, authrty, 1));
+        vm.resumeGasMetering();
         invoker.execute(authrty, n, transactions, v, r, s);
     }
 
@@ -76,8 +80,8 @@ contract BatchInvokerTest is Test {
         (uint8 v, bytes32 r, bytes32 s, bytes memory transactions) = constructAndSignTransaction(1 ether);
         address authrty = authority.addr;
         uint256 n = nonce;
-        vm.resumeGasMetering();
         vm.expectRevert();
+        vm.resumeGasMetering();
         invoker.execute{ value: 0.5 ether }(authrty, n, transactions, v, r, s);
     }
 
@@ -87,8 +91,8 @@ contract BatchInvokerTest is Test {
         (uint8 v, bytes32 r, bytes32 s, bytes memory transactions) = constructAndSignTransaction(1 ether);
         address authrty = authority.addr;
         uint256 n = nonce;
-        vm.resumeGasMetering();
         vm.expectRevert(abi.encodeWithSelector(BatchInvoker.ExtraValue.selector));
+        vm.resumeGasMetering();
         invoker.execute{ value: 2 ether }(authrty, n, transactions, v, r, s);
     }
 

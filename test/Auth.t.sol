@@ -82,8 +82,8 @@ contract AuthTest is Test {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(authority.privateKey, digest);
         // pass `wrongCommit` with signature over `commit`
         bytes32 wrongCommit = keccak256("abstraction h8er");
-        vm.resumeGasMetering();
         vm.expectRevert(abi.encodeWithSelector(Auth.BadAuth.selector));
+        vm.resumeGasMetering();
         target.authHarness(authority.addr, wrongCommit, v, r, s);
     }
 
