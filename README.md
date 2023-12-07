@@ -71,8 +71,9 @@ make install-huff
 
 **Running Examples**
 
-To run the examples, interact with the patched `forge` binary as normal. There is a special override for the `Prague` hardfork within the `foundry.toml` which
-will enable the `AUTH` & `AUTHCALL` opcodes, and the `foundry.toml` specifies the patched `solc` binary as the compiler.
+To run the examples, interact with the patched `forge` binary as normal. Try the existing tests by running `bin/forge test`.
+
+There is a special override for the `Prague` hardfork within the `foundry.toml` which will enable the `AUTH` & `AUTHCALL` opcodes, and the `foundry.toml` specifies the patched `solc` binary as the compiler.
 
 [foundry]: https://github.com/foundry-rs/foundry
 [revm]: https://github.com/bluealloy/revm
