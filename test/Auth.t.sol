@@ -83,6 +83,4 @@ contract AuthTest is Test {
         vm.expectRevert();
         target.authCallHarness(address(0), "0x", 0, 0);
     }
-
-    // TODO: authCall failure - throws revert data
 }
