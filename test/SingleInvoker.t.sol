@@ -7,6 +7,7 @@ import { SingleInvoker } from "../src/SingleInvoker.sol";
 import { MockSomeContractToBeCalled } from "./mocks/MockSomeContractToBeCalled.sol";
 
 contract SingleInvokerTest is Test {
+    uint256 public nonce;
     uint256 public value;
     uint256 public gas;
 
@@ -15,6 +16,7 @@ contract SingleInvokerTest is Test {
     MockSomeContractToBeCalled public someContract;
 
     function setUp() public {
+        nonce = 0;
         value = 0;
         gas = 1 ether;
 
@@ -33,7 +35,7 @@ contract SingleInvokerTest is Test {
         view
         returns (uint8 v, bytes32 r, bytes32 s, bytes memory execData)
     {
-        execData = abi.encode(gas, value, address(someContract), data);
+        execData = abi.encode(nonce, gas, value, address(someContract), data);
         // construct batch digest & sign
         bytes32 digest = invoker.getDigest(execData);
         (v, r, s) = vm.sign(authority.privateKey, digest);
