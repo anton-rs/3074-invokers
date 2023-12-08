@@ -11,6 +11,11 @@ contract SingleInvoker is Auth {
 
     /// @notice produce a digest to sign that authorizes this contract
     ///         to execute the transactions using AUTHCALL
+    /// @param nonce - see `execute` docs
+    /// @param gas - see `execute` docs
+    /// @param value - see `execute` docs
+    /// @param to - see `execute` docs
+    /// @param data - see `execute` docs
     /// @return digest - the payload that the authority should sign
     ///         in order to authorize the transactions using AUTHCALL
     function getDigest(uint256 nonce, uint256 gas, uint256 value, address to, bytes memory data) external view returns (bytes32 digest) {
@@ -18,6 +23,11 @@ contract SingleInvoker is Auth {
     }
 
     /// @notice produce a hashed commitment to an Batch to be executed using AUTHCALL
+    /// @param nonce - see `execute` docs
+    /// @param gas - see `execute` docs
+    /// @param value - see `execute` docs
+    /// @param to - see `execute` docs
+    /// @param data - see `execute` docs
     /// @return commit - commitment to the batch of transactions
     /// @dev commit is a security-critical parameter to the signed digest for `auth`
     function getCommit(uint256 nonce, uint256 gas, uint256 value, address to, bytes memory data) public pure returns (bytes32 commit) {
@@ -25,6 +35,12 @@ contract SingleInvoker is Auth {
     }
 
     /// @notice execute a Batch of Calls on behalf of a signing authority using AUTH and AUTHCALL
+    /// @param authority - the signer authorizing the AUTHCALL
+    /// @param nonce - unique sequential identifier for this transaction
+    /// @param gas - gas limit for both the `auth` and `authcall` executions
+    /// @param value - the value to transfer from the authority to `to`
+    /// @param to - the address to make the call to
+    /// @param data - the input data to send to `to`
     /// @dev (v, r, s) are interpreted as an ECDSA signature on the secp256k1 curve over getDigest(batch)
     function execute(address authority, uint256 nonce, uint256 gas, uint256 value, address to, bytes memory data, uint8 v, bytes32 r, bytes32 s)
         public
