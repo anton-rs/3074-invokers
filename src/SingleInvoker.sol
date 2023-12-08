@@ -7,6 +7,8 @@ import { Auth } from "src/Auth.sol";
 /// @author Julian Rachman <https://github.com/Jrachman>
 /// @notice Example EIP-3074 Invoker contract which executes a single call using AUTH and AUTHCALL.
 contract SingleInvoker is Auth {
+    // TODO: add commit check errors here
+
     /// @notice produce a digest to sign that authorizes this contract
     ///         to execute the transactions using AUTHCALL
     /// @return digest - the payload that the authority should sign

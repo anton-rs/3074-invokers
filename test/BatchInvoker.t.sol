@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import { Test, console2 } from "forge-std/Test.sol";
 import { VmSafe } from "forge-std/Vm.sol";
 import { BatchInvoker } from "../src/BatchInvoker.sol";
+import { MockSomeContractToBeCalled } from "./mocks/MockSomeContractToBeCalled.sol";
 
 contract Callee {
     error UnexpectedSender(address expected, address actual);
@@ -19,14 +20,17 @@ contract BatchInvokerTest is Test {
     uint256 nonce = 0;
     bytes public transactions;
     VmSafe.Wallet public authority;
+    MockSomeContractToBeCalled public someContract;
 
     function setUp() public {
         invoker = new BatchInvoker();
         callee = new Callee();
         authority = vm.createWallet("authority");
+        someContract = new MockSomeContractToBeCalled();
         vm.label(address(invoker), "invoker");
         vm.label(address(callee), "callee");
         vm.label(authority.addr, "authority");
+        vm.label(address(someContract), "someContract");
     }
 
     function constructAndSignTransaction(uint256 value) internal returns (uint8 v, bytes32 r, bytes32 s) {
@@ -74,4 +78,33 @@ contract BatchInvokerTest is Test {
     }
 
     // TODO: if subcall reverts, it reverts with the right return data (bubbles up the error)
+    function test_subcallRevertWithReturnData() public {}
+
+    // single success authcall gas comparison test versus SingleInvoker
+    function test_authCallSuccess() public {
+        bytes memory data = abi.encodeWithSelector(someContract.twoPlusTwoEquals.selector, 4);
+        uint8 identifier = 2;
+        transactions = abi.encodePacked(identifier, address(someContract), uint256(0), data.length, data);
+        // construct batch digest & sign
+        bytes32 digest = invoker.getDigest(nonce, transactions);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(authority.privateKey, digest);
+
+        invoker.execute(authority.addr, nonce, transactions, v, r, s);
+
+        assertTrue(someContract.correctAnswers() == 1);
+    }
+
+    // single reverted authcall gas comparison test versus SingleInvoker
+    function test_authCallFail_SumIncorrect() public {
+        bytes memory data = abi.encodeWithSelector(someContract.twoPlusTwoEquals.selector, 5);
+        uint8 identifier = 2;
+        transactions = abi.encodePacked(identifier, address(someContract), uint256(0), data.length, data);
+        // construct batch digest & sign
+        bytes32 digest = invoker.getDigest(nonce, transactions);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(authority.privateKey, digest);
+
+        vm.expectRevert(MockSomeContractToBeCalled.SumIncorrect.selector);
+        invoker.execute(authority.addr, nonce, transactions, v, r, s);
+    }
+
 }
