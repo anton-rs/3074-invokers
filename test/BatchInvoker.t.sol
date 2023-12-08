@@ -5,6 +5,7 @@ import { Test, console2 } from "forge-std/Test.sol";
 import { VmSafe } from "forge-std/Vm.sol";
 import { BatchInvoker } from "../src/BatchInvoker.sol";
 import { MockSomeContractToBeCalled } from "./mocks/MockSomeContractToBeCalled.sol";
+import { BaseInvoker } from "../src/BaseInvoker.sol";
 
 contract Callee {
     error UnexpectedSender(address expected, address actual);
@@ -17,10 +18,13 @@ contract Callee {
 contract BatchInvokerTest is Test {
     Callee public callee;
     BatchInvoker public invoker;
-    uint256 nonce = 0;
-    bytes public transactions;
     VmSafe.Wallet public authority;
     MockSomeContractToBeCalled public someContract;
+
+    uint8 AUTHCALL_IDENTIFIER = 2;
+
+    uint256 nonce = 0;
+    uint256 value = 0;
 
     function setUp() public {
         invoker = new BatchInvoker();
@@ -33,48 +37,70 @@ contract BatchInvokerTest is Test {
         vm.label(address(someContract), "someContract");
     }
 
-    function constructAndSignTransaction(uint256 value) internal returns (uint8 v, bytes32 r, bytes32 s) {
+    function constructAndSignTransaction()
+        internal
+        view
+        returns (uint8 v, bytes32 r, bytes32 s, bytes memory execData)
+    {
         bytes memory data = abi.encodeWithSelector(Callee.expectSender.selector, address(authority.addr));
-        uint8 identifier = 2;
-        transactions = abi.encodePacked(identifier, address(callee), value, data.length, data);
+        bytes memory transactions = abi.encodePacked(AUTHCALL_IDENTIFIER, address(callee), value, data.length, data);
+        execData = abi.encode(nonce, transactions);
         // construct batch digest & sign
-        bytes32 digest = invoker.getDigest(nonce, transactions);
+        bytes32 digest = invoker.getDigest(execData);
         (v, r, s) = vm.sign(authority.privateKey, digest);
     }
 
     function test_authCall() public {
-        (uint8 v, bytes32 r, bytes32 s) = constructAndSignTransaction(0);
+        vm.pauseGasMetering();
+        (uint8 v, bytes32 r, bytes32 s, bytes memory execData) = constructAndSignTransaction();
+        address authrty = authority.addr;
+        vm.resumeGasMetering();
         // this will call Callee.expectSender(authority)
-        invoker.execute(authority.addr, nonce, transactions, v, r, s);
+        invoker.execute(authrty, v, r, s, execData);
     }
 
     // invalid nonce fails
     function test_invalidNonce() public {
+        vm.pauseGasMetering();
         // 1 is invalid starting nonce
         nonce = 1;
-        (uint8 v, bytes32 r, bytes32 s) = constructAndSignTransaction(0);
+        (uint8 v, bytes32 r, bytes32 s, bytes memory execData) = constructAndSignTransaction();
+        address authrty = authority.addr;
         vm.expectRevert(abi.encodeWithSelector(BatchInvoker.InvalidNonce.selector, authority.addr, 1));
-        invoker.execute(authority.addr, nonce, transactions, v, r, s);
+        vm.resumeGasMetering();
+        invoker.execute(authrty, v, r, s, execData);
     }
 
     function test_authCallWithValue() public {
-        (uint8 v, bytes32 r, bytes32 s) = constructAndSignTransaction(1 ether);
+        vm.pauseGasMetering();
+        value = 1 ether;
+        (uint8 v, bytes32 r, bytes32 s, bytes memory execData) = constructAndSignTransaction();
+        address authrty = authority.addr;
+        vm.resumeGasMetering();
         // this will call Callee.expectSender(authority)
-        invoker.execute{ value: 1 ether }(authority.addr, nonce, transactions, v, r, s);
+        invoker.execute{ value: 1 ether }(authrty, v, r, s, execData);
     }
 
     // fails if too little value to pass to sub-call
     function test_tooLittleValue() public {
-        (uint8 v, bytes32 r, bytes32 s) = constructAndSignTransaction(1 ether);
+        vm.pauseGasMetering();
+        value = 1 ether;
+        (uint8 v, bytes32 r, bytes32 s, bytes memory execData) = constructAndSignTransaction();
+        address authrty = authority.addr;
         vm.expectRevert();
-        invoker.execute{ value: 0.5 ether }(authority.addr, nonce, transactions, v, r, s);
+        vm.resumeGasMetering();
+        invoker.execute{ value: 0.5 ether }(authrty, v, r, s, execData);
     }
 
     // fails if too much value to pass to sub-call
     function test_tooMuchValue() public {
-        (uint8 v, bytes32 r, bytes32 s) = constructAndSignTransaction(1 ether);
-        vm.expectRevert(abi.encodeWithSelector(BatchInvoker.ExtraValue.selector));
-        invoker.execute{ value: 2 ether }(authority.addr, nonce, transactions, v, r, s);
+        vm.pauseGasMetering();
+        value = 1 ether;
+        (uint8 v, bytes32 r, bytes32 s, bytes memory execData) = constructAndSignTransaction();
+        address authrty = authority.addr;
+        vm.expectRevert(abi.encodeWithSelector(BaseInvoker.ExtraValue.selector));
+        vm.resumeGasMetering();
+        invoker.execute{ value: 2 ether }(authrty, v, r, s, execData);
     }
 
     // TODO: if subcall reverts, it reverts with the right return data (bubbles up the error)

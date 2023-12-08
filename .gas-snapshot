@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 AuthTest:testFuzz_authSimple_success(bytes32,uint256) (runs: 256, μ: 14499, ~: 14499)
 AuthTest:test_authCall_withoutAuth() (gas: 8856)
 AuthTest:test_authSimple_fail() (gas: 17682)
