@@ -7,7 +7,7 @@ import { SingleInvoker } from "../src/SingleInvoker.sol";
 import { MockSomeContractToBeCalled } from "./mocks/MockSomeContractToBeCalled.sol";
 
 contract SingleInvokerTest is Test {
-    uint256 public nonce;
+    uint256 public value;
     uint256 public gas;
 
     SingleInvoker public invoker;
@@ -15,7 +15,7 @@ contract SingleInvokerTest is Test {
     MockSomeContractToBeCalled public someContract;
 
     function setUp() public {
-        nonce = 0;
+        value = 0;
         gas = 1 ether;
 
         invoker = new SingleInvoker();
@@ -28,17 +28,23 @@ contract SingleInvokerTest is Test {
     }
 
     // prepare commit for signing
-    function constructAndSignTransaction(uint256 value, bytes memory data) internal returns (uint8 v, bytes32 r, bytes32 s) {
-        bytes32 digest = invoker.getDigest(nonce, gas, value, address(someContract), data);
+    function constructAndSignTransaction(bytes memory data)
+        internal
+        view
+        returns (uint8 v, bytes32 r, bytes32 s, bytes memory execData)
+    {
+        execData = abi.encode(gas, value, address(someContract), data);
+        // construct batch digest & sign
+        bytes32 digest = invoker.getDigest(execData);
         (v, r, s) = vm.sign(authority.privateKey, digest);
     }
 
     // single success authcall gas comparison test versus BatchInvoker
     function test_authCallSuccess() public {
         bytes memory data = abi.encodeWithSelector(someContract.twoPlusTwoEquals.selector, 4);
-        (uint8 v, bytes32 r, bytes32 s) = constructAndSignTransaction(0, data);
+        (uint8 v, bytes32 r, bytes32 s, bytes memory execData) = constructAndSignTransaction(data);
 
-        invoker.execute(authority.addr, nonce, gas, 0, address(someContract), data, v, r, s);
+        invoker.execute(authority.addr, v, r, s, execData);
 
         assertTrue(someContract.correctAnswers() == 1);
     }
@@ -46,9 +52,9 @@ contract SingleInvokerTest is Test {
     // single reverted authcall gas comparison test versus BatchInvoker
     function test_authCallFail_SumIncorrect() public {
         bytes memory data = abi.encodeWithSelector(someContract.twoPlusTwoEquals.selector, 5);
-        (uint8 v, bytes32 r, bytes32 s) = constructAndSignTransaction(0, data);
+        (uint8 v, bytes32 r, bytes32 s, bytes memory execData) = constructAndSignTransaction(data);
 
         vm.expectRevert(MockSomeContractToBeCalled.SumIncorrect.selector);
-        invoker.execute(authority.addr, nonce, gas, 0, address(someContract), data, v, r, s);
+        invoker.execute(authority.addr, v, r, s, execData);
     }
 }

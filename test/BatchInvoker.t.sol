@@ -109,13 +109,13 @@ contract BatchInvokerTest is Test {
     // single success authcall gas comparison test versus SingleInvoker
     function test_authCallSuccess() public {
         bytes memory data = abi.encodeWithSelector(someContract.twoPlusTwoEquals.selector, 4);
-        uint8 identifier = 2;
-        transactions = abi.encodePacked(identifier, address(someContract), uint256(0), data.length, data);
+        bytes memory transactions = abi.encodePacked(AUTHCALL_IDENTIFIER, address(someContract), uint256(0), data.length, data);
+        bytes memory execData = abi.encode(nonce, transactions);
         // construct batch digest & sign
-        bytes32 digest = invoker.getDigest(nonce, transactions);
+        bytes32 digest = invoker.getDigest(execData);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(authority.privateKey, digest);
 
-        invoker.execute(authority.addr, nonce, transactions, v, r, s);
+        invoker.execute(authority.addr, v, r, s, execData);
 
         assertTrue(someContract.correctAnswers() == 1);
     }
@@ -123,14 +123,15 @@ contract BatchInvokerTest is Test {
     // single reverted authcall gas comparison test versus SingleInvoker
     function test_authCallFail_SumIncorrect() public {
         bytes memory data = abi.encodeWithSelector(someContract.twoPlusTwoEquals.selector, 5);
-        uint8 identifier = 2;
-        transactions = abi.encodePacked(identifier, address(someContract), uint256(0), data.length, data);
+        bytes memory transactions = abi.encodePacked(AUTHCALL_IDENTIFIER, address(someContract), uint256(0), data.length, data);
+        bytes memory execData = abi.encode(nonce, transactions);
         // construct batch digest & sign
-        bytes32 digest = invoker.getDigest(nonce, transactions);
+        bytes32 digest = invoker.getDigest(execData);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(authority.privateKey, digest);
 
+
         vm.expectRevert(MockSomeContractToBeCalled.SumIncorrect.selector);
-        invoker.execute(authority.addr, nonce, transactions, v, r, s);
+        invoker.execute(authority.addr, v, r, s, execData);
     }
 
 }
