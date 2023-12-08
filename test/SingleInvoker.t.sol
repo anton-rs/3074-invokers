@@ -41,9 +41,11 @@ contract SingleInvokerTest is Test {
 
     // single success authcall gas comparison test versus BatchInvoker
     function test_authCallSuccess() public {
+        vm.pauseGasMetering();
         bytes memory data = abi.encodeWithSelector(someContract.twoPlusTwoEquals.selector, 4);
         (uint8 v, bytes32 r, bytes32 s, bytes memory execData) = constructAndSignTransaction(data);
 
+        vm.resumeGasMetering();
         invoker.execute(authority.addr, v, r, s, execData);
 
         assertTrue(someContract.correctAnswers() == 1);
@@ -51,10 +53,12 @@ contract SingleInvokerTest is Test {
 
     // single reverted authcall gas comparison test versus BatchInvoker
     function test_authCallFail_SumIncorrect() public {
+        vm.pauseGasMetering();
         bytes memory data = abi.encodeWithSelector(someContract.twoPlusTwoEquals.selector, 5);
         (uint8 v, bytes32 r, bytes32 s, bytes memory execData) = constructAndSignTransaction(data);
 
         vm.expectRevert(MockSomeContractToBeCalled.SumIncorrect.selector);
+        vm.resumeGasMetering();
         invoker.execute(authority.addr, v, r, s, execData);
     }
 }

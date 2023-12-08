@@ -108,6 +108,7 @@ contract BatchInvokerTest is Test {
 
     // single success authcall gas comparison test versus SingleInvoker
     function test_authCallSuccess() public {
+        vm.pauseGasMetering();
         bytes memory data = abi.encodeWithSelector(someContract.twoPlusTwoEquals.selector, 4);
         bytes memory transactions = abi.encodePacked(AUTHCALL_IDENTIFIER, address(someContract), uint256(0), data.length, data);
         bytes memory execData = abi.encode(nonce, transactions);
@@ -115,6 +116,7 @@ contract BatchInvokerTest is Test {
         bytes32 digest = invoker.getDigest(execData);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(authority.privateKey, digest);
 
+        vm.resumeGasMetering();
         invoker.execute(authority.addr, v, r, s, execData);
 
         assertTrue(someContract.correctAnswers() == 1);
@@ -122,6 +124,7 @@ contract BatchInvokerTest is Test {
 
     // single reverted authcall gas comparison test versus SingleInvoker
     function test_authCallFail_SumIncorrect() public {
+        vm.pauseGasMetering();
         bytes memory data = abi.encodeWithSelector(someContract.twoPlusTwoEquals.selector, 5);
         bytes memory transactions = abi.encodePacked(AUTHCALL_IDENTIFIER, address(someContract), uint256(0), data.length, data);
         bytes memory execData = abi.encode(nonce, transactions);
@@ -131,6 +134,7 @@ contract BatchInvokerTest is Test {
 
 
         vm.expectRevert(MockSomeContractToBeCalled.SumIncorrect.selector);
+        vm.resumeGasMetering();
         invoker.execute(authority.addr, v, r, s, execData);
     }
 
