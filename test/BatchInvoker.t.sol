@@ -31,6 +31,7 @@ contract BatchInvokerTest is Test {
         vm.label(address(invoker), "invoker");
         vm.label(address(callee), "callee");
         vm.label(authority.addr, "authority");
+        vm.deal(authority.addr, 2 ether);
     }
 
     function constructAndSignTransaction()
@@ -67,36 +68,39 @@ contract BatchInvokerTest is Test {
         invoker.execute(authrty, v, r, s, execData);
     }
 
-    function test_authCallWithValue() public {
+    function test_withValue() public {
         vm.pauseGasMetering();
-        value = 1 ether;
+        value = 0.99 ether;
         (uint8 v, bytes32 r, bytes32 s, bytes memory execData) = constructAndSignTransaction();
         address authrty = authority.addr;
         vm.resumeGasMetering();
         // this will call Callee.expectSender(authority)
-        invoker.execute{ value: 1 ether }(authrty, v, r, s, execData);
+        invoker.execute(authrty, v, r, s, execData);
+        vm.pauseGasMetering();
+        assertEq(authrty.balance, 1.01 ether);
+    }
+
+    function test_withAllValue() public {
+        vm.pauseGasMetering();
+        value = 2 ether;
+        (uint8 v, bytes32 r, bytes32 s, bytes memory execData) = constructAndSignTransaction();
+        address authrty = authority.addr;
+        vm.resumeGasMetering();
+        // this will call Callee.expectSender(authority)
+        invoker.execute(authrty, v, r, s, execData);
+        vm.pauseGasMetering();
+        assertEq(authrty.balance, 0);
     }
 
     // fails if too little value to pass to sub-call
     function test_tooLittleValue() public {
         vm.pauseGasMetering();
-        value = 1 ether;
+        value = 2.2 ether;
         (uint8 v, bytes32 r, bytes32 s, bytes memory execData) = constructAndSignTransaction();
         address authrty = authority.addr;
         vm.expectRevert();
         vm.resumeGasMetering();
-        invoker.execute{ value: 0.5 ether }(authrty, v, r, s, execData);
-    }
-
-    // fails if too much value to pass to sub-call
-    function test_tooMuchValue() public {
-        vm.pauseGasMetering();
-        value = 1 ether;
-        (uint8 v, bytes32 r, bytes32 s, bytes memory execData) = constructAndSignTransaction();
-        address authrty = authority.addr;
-        vm.expectRevert(abi.encodeWithSelector(BaseInvoker.ExtraValue.selector));
-        vm.resumeGasMetering();
-        invoker.execute{ value: 2 ether }(authrty, v, r, s, execData);
+        invoker.execute(authrty, v, r, s, execData);
     }
 
     // TODO: if subcall reverts, it reverts with the right return data (bubbles up the error)

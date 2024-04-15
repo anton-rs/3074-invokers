@@ -9,9 +9,6 @@ import { MultiSendAuthCallOnly } from "src/MultiSendAuthCallOnly.sol";
 /// @notice Shared functionality for Invoker contracts to efficiently AUTH a signer, then execute arbitrary application logic.
 /// @dev To implement an Invoker contract, simply inherit BaseInvoker and override the exec function with your Invoker logic.
 abstract contract BaseInvoker is Auth {
-    /// @notice thrown when `execute` finishes with leftover value in the Invoker contract, which is unsafe as it could be spent by anyone
-    error ExtraValue();
-
     /// @notice produce a digest to sign that authorizes the invoker
     ///         to execute actions using AUTHCALL
     /// @param nonce - the current transaction nonce of the signing authority
@@ -34,8 +31,6 @@ abstract contract BaseInvoker is Auth {
         auth(authority, keccak256(execData), v, r, s);
         // execute Invoker operations, which may use AUTHCALL
         exec(authority, execData);
-        // ensure that all value passed to the transaction was passed on to sub-calls (no leftover value in invoker)
-        if (address(this).balance != 0) revert ExtraValue();
     }
 
     /// @notice override `exec` to implement Invoker-specific application logic
