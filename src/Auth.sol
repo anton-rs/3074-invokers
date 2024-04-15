@@ -12,7 +12,7 @@ abstract contract Auth is BaseAuth {
 
     /// @notice call AUTH opcode with a given a commitment + signature
     /// @param commit - any 32-byte value used to commit to transaction validity conditions
-    /// @dev (v, r, s) are interpreted as an ECDSA signature on the secp256k1 curve over getDigest(commit)
+    /// @dev (v, r, s) are interpreted as an ECDSA signature on the secp256k1 curve over getDigest(nonce, commit)
     /// @custom:reverts BadAuth() if  AUTH fails due to invalid signature
     function auth(address authority, bytes32 commit, uint8 v, bytes32 r, bytes32 s) internal {
         bool success = authSimple(authority, commit, v, r, s);

@@ -10,7 +10,7 @@ contract Executor is Script {
 
     function signAndExecute(address invoker, bytes memory execData) public {
         // construct the digest from execData
-        bytes32 digest = BaseInvoker(invoker).getDigest(execData);
+        bytes32 digest = BaseInvoker(invoker).getDigest(vm.getNonce(vm.addr(pk)), execData);
         // sign the digest
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(pk, digest);
         // broadcast execute transaction

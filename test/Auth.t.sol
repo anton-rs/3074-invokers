@@ -37,7 +37,7 @@ contract AuthTest is Test {
     function test_auth_success() external {
         vm.pauseGasMetering();
         bytes32 commit = keccak256("eip-3074 4ever");
-        bytes32 digest = target.getDigest(commit);
+        bytes32 digest = target.getDigest(vm.getNonce(vm.addr(authority.privateKey)), commit);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(authority.privateKey, digest);
         vm.resumeGasMetering();
         bool success = target.authSimpleHarness(authority.addr, commit, v, r, s);
@@ -49,7 +49,7 @@ contract AuthTest is Test {
         vm.pauseGasMetering();
         // sign digest for `commit`
         bytes32 commit = keccak256("eip-3074 4ever");
-        bytes32 digest = target.getDigest(commit);
+        bytes32 digest = target.getDigest(vm.getNonce(vm.addr(authority.privateKey)), commit);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(authority.privateKey, digest);
         // pass `wrongCommit` with signature over `commit`
         bytes32 wrongCommit = keccak256("abstraction h8er");
@@ -65,7 +65,7 @@ contract AuthTest is Test {
             privateKey > 0
                 && privateKey < 115792089237316195423570985008687907852837564279074904382605163141518161494337
         );
-        bytes32 digest = target.getDigest(commit);
+        bytes32 digest = target.getDigest(vm.getNonce(vm.addr(authority.privateKey)), commit);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
         address authrty = vm.addr(privateKey);
         vm.resumeGasMetering();
@@ -78,7 +78,7 @@ contract AuthTest is Test {
         vm.pauseGasMetering();
         // sign digest for `commit`
         bytes32 commit = keccak256("eip-3074 4ever");
-        bytes32 digest = target.getDigest(commit);
+        bytes32 digest = target.getDigest(vm.getNonce(vm.addr(authority.privateKey)), commit);
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(authority.privateKey, digest);
         // pass `wrongCommit` with signature over `commit`
         bytes32 wrongCommit = keccak256("abstraction h8er");

@@ -8,6 +8,7 @@ abstract contract BaseAuth {
     uint8 constant MAGIC = 0x04;
 
     /// @notice produce a digest for the authorizer to sign
+    /// @param nonce - the current transaction nonce of the signing authority
     /// @param commit - any 32-byte value used to commit to transaction validity conditions
     /// @return digest - sign the `digest` to authorize the invoker to execute the `calls`
     /// @dev signing `digest` authorizes this contact to execute code on behalf of the signer
@@ -16,9 +17,10 @@ abstract contract BaseAuth {
     ///      the Invoker logic MUST implement constraints on the contract execution based on information in the `commit`;
     ///      otherwise, any EOA that signs an AUTH for the Invoker will be compromised
     /// @dev per EIP-3074, digest = keccak256(MAGIC || chainId || paddedInvokerAddress || commit)
-    function getDigest(bytes32 commit) public view returns (bytes32 digest) {
-        digest =
-            keccak256(abi.encodePacked(MAGIC, bytes32(block.chainid), bytes32(uint256(uint160(address(this)))), commit));
+    function getDigest(uint256 nonce, bytes32 commit) public view returns (bytes32 digest) {
+        digest = keccak256(
+            abi.encodePacked(MAGIC, bytes32(block.chainid), nonce, bytes32(uint256(uint160(address(this)))), commit)
+        );
     }
 
     function authSimple(address authority, bytes32 commit, uint8 v, bytes32 r, bytes32 s)

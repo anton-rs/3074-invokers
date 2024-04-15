@@ -42,7 +42,7 @@ contract BatchInvokerTest is Test {
         bytes memory transactions = abi.encodePacked(AUTHCALL_IDENTIFIER, address(callee), value, data.length, data);
         execData = abi.encode(nonce, transactions);
         // construct batch digest & sign
-        bytes32 digest = invoker.getDigest(execData);
+        bytes32 digest = invoker.getDigest(vm.getNonce(vm.addr(authority.privateKey)), execData);
         (v, r, s) = vm.sign(authority.privateKey, digest);
     }
 

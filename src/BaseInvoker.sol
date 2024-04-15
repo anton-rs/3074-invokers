@@ -14,12 +14,13 @@ abstract contract BaseInvoker is Auth {
 
     /// @notice produce a digest to sign that authorizes the invoker
     ///         to execute actions using AUTHCALL
+    /// @param nonce - the current transaction nonce of the signing authority
     /// @param execData - packed bytes containing invoker-specific execution logic
     /// @dev keccak256 hash of execData is used as the commit for AUTH
     /// @return digest - the payload that the authority should sign
     ///         in order to authorize the specific execData using AUTHCALL
-    function getDigest(bytes memory execData) external view returns (bytes32 digest) {
-        digest = getDigest(keccak256(execData));
+    function getDigest(uint256 nonce, bytes memory execData) external view returns (bytes32 digest) {
+        digest = getDigest(nonce, keccak256(execData));
     }
 
     /// @notice execute some action(s) on behalf of a signing authority using AUTH and AUTHCALL
