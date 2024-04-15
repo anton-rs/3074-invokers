@@ -2,7 +2,6 @@
 pragma solidity ^0.8.20;
 
 import { Auth } from "src/Auth.sol";
-import { MultiSendAuthCallOnly } from "src/MultiSendAuthCallOnly.sol";
 
 /// @title BaseInvoker
 /// @author Anna Carroll <https://github.com/anna-carroll/3074>
