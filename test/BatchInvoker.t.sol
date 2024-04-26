@@ -43,6 +43,7 @@ contract BatchInvokerTest is Test {
     }
 
     function test_execute_withData() external {
+        vm.pauseGasMetering();
         uint256 nonce = invoker.nonce(authority.addr);
 
         bytes memory data = abi.encodeWithSelector(Callee.increment.selector);
@@ -54,6 +55,8 @@ contract BatchInvokerTest is Test {
 
         bytes32 hash = invoker.getDigest(execData, vm.getNonce(address(authority.addr)));
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(authority.privateKey, hash);
+
+        vm.resumeGasMetering();
         invoker.execute(execData, authority.addr, Auth.Signature({ yParity: vToYParity(v), r: r, s: s }));
 
         assertEq(callee.counter(authority.addr), 3);
@@ -61,6 +64,8 @@ contract BatchInvokerTest is Test {
     }
 
     function test_execute_withValue() external {
+        vm.pauseGasMetering();
+
         vm.deal(authority.addr, 1 ether);
 
         uint256 nonce = invoker.nonce(authority.addr);
@@ -72,6 +77,8 @@ contract BatchInvokerTest is Test {
 
         bytes32 hash = invoker.getDigest(execData, vm.getNonce(address(authority.addr)));
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(authority.privateKey, hash);
+
+        vm.resumeGasMetering();
         invoker.execute(execData, authority.addr, Auth.Signature({ yParity: vToYParity(v), r: r, s: s }));
 
         assertEq(address(authority.addr).balance, 0 ether);
@@ -79,6 +86,8 @@ contract BatchInvokerTest is Test {
     }
 
     function test_execute_withDataAndValue() external {
+        vm.pauseGasMetering();
+
         vm.deal(authority.addr, 6 ether);
 
         uint256 nonce = invoker.nonce(authority.addr);
@@ -92,6 +101,8 @@ contract BatchInvokerTest is Test {
 
         bytes32 hash = invoker.getDigest(execData, vm.getNonce(address(authority.addr)));
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(authority.privateKey, hash);
+
+        vm.resumeGasMetering();
         invoker.execute(execData, authority.addr, Auth.Signature({ yParity: vToYParity(v), r: r, s: s }));
 
         assertEq(callee.counter(authority.addr), 3);
@@ -99,6 +110,8 @@ contract BatchInvokerTest is Test {
     }
 
     function test_execute_revert_invalidSender() external {
+        vm.pauseGasMetering();
+
         uint256 nonce = invoker.nonce(authority.addr);
 
         bytes memory data_1 = abi.encodeWithSelector(Callee.increment.selector);
@@ -113,12 +126,14 @@ contract BatchInvokerTest is Test {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(authority.privateKey, hash);
 
         vm.expectRevert(abi.encodeWithSelector(Callee.UnexpectedSender.selector, address(0), address(authority.addr)));
+        vm.resumeGasMetering();
         invoker.execute(execData, authority.addr, Auth.Signature({ yParity: vToYParity(v), r: r, s: s }));
 
         assertEq(callee.counter(authority.addr), 0);
     }
 
     function test_execute_revert_revoke() external {
+        vm.pauseGasMetering();
         vm.deal(authority.addr, 1 ether);
 
         bytes memory calls;
@@ -131,6 +146,7 @@ contract BatchInvokerTest is Test {
         bytes32 hash = invoker.getDigest(execData, vm.getNonce(address(authority.addr)));
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(authority.privateKey, hash);
 
+        vm.resumeGasMetering();
         invoker.execute(execData, authority.addr, Auth.Signature({ yParity: vToYParity(v), r: r, s: s }));
 
         assertEq(address(authority.addr).balance, 0 ether);
@@ -147,6 +163,7 @@ contract BatchInvokerTest is Test {
     }
 
     function test_execute_revert_invalidNonce() external {
+        vm.pauseGasMetering();
         vm.deal(authority.addr, 1 ether);
 
         bytes memory calls;
@@ -159,6 +176,7 @@ contract BatchInvokerTest is Test {
         bytes32 hash = invoker.getDigest(execData, vm.getNonce(address(authority.addr)));
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(authority.privateKey, hash);
 
+        vm.resumeGasMetering();
         invoker.execute(execData, authority.addr, Auth.Signature({ yParity: vToYParity(v), r: r, s: s }));
 
         assertEq(address(authority.addr).balance, 0 ether);
