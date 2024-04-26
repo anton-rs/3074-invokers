@@ -22,15 +22,14 @@ abstract contract BaseInvoker is Auth {
 
     /// @notice execute some action(s) on behalf of a signing authority using AUTH and AUTHCALL
     /// @param execData - arbitrary bytes containing Invoker-specific logic
-    /// @param authority - signer to AUTH
-    /// @param signature - signature input
-    function execute(bytes memory execData, address authority, Signature memory signature) external {
+    /// @param signature - Authority's signature over the AUTH digest.
+    function execute(bytes memory execData, Signature memory signature) external {
         // AUTH this contract to execute the Batch on behalf of the authority
-        auth(authority, keccak256(execData), signature);
+        auth(keccak256(execData), signature);
         // execute Invoker operations, which may use AUTHCALL
-        exec(execData, authority);
+        exec(execData, signature);
     }
 
     /// @notice override `exec` to implement Invoker-specific application logic
-    function exec(bytes memory execData, address authority) internal virtual;
+    function exec(bytes memory execData, Signature memory signature) internal virtual;
 }

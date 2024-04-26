@@ -13,6 +13,7 @@ contract Auth {
     error BadAuth();
 
     struct Signature {
+        address signer;
         uint8 yParity;
         bytes32 r;
         bytes32 s;
@@ -34,14 +35,14 @@ contract Auth {
     }
 
     /// @notice call AUTH opcode with a given a commitment + signature
-    /// @param authority - The authority to authorize with.
     /// @param commit - any 32-byte value used to commit to transaction validity conditions
     /// @param signature - The signature of the auth message.
     /// @dev signature values (yParity, r, s) are interpreted as an ECDSA signature on the secp256k1 curve over getDigest(commit).
     /// @return success - True if the authorization is successful.
     /// @custom:reverts BadAuth() if AUTH fails due to invalid signature.
-    function auth(address authority, bytes32 commit, Signature memory signature) public returns (bool success) {
+    function auth(bytes32 commit, Signature memory signature) public returns (bool success) {
         bytes memory args = abi.encodePacked(signature.yParity, signature.r, signature.s, commit);
+        address authority = signature.signer;
         assembly {
             success := auth(authority, add(args, 0x20), mload(args))
         }
