@@ -108,7 +108,7 @@ contract BatchInvokerTest is Test {
         assertEq(callee.counter(authority.addr), 3);
         assertEq(callee.values(authority.addr), 6 ether);
     }
-    
+
     function test_execute_broadcastAsAuthority() external {
         vm.pauseGasMetering();
 

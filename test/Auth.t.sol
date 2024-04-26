@@ -47,7 +47,7 @@ contract AuthTest is Test {
 
     function test_auth_revert_invalidAuthority(bytes32 commit) external {
         vm.pauseGasMetering();
-        
+
         uint64 nonce = vm.getNonce(address(authority.addr));
 
         bytes32 hash = target.getDigest(commit, nonce);

@@ -6,7 +6,7 @@ import { Auth } from "src/Auth.sol";
 /// @title BaseInvoker
 /// @author Anna Carroll <https://github.com/anna-carroll/3074>
 /// @author Jake Moxey <https://github.com/jxom>
-/// @notice Invoker contract template. 
+/// @notice Invoker contract template.
 /// @dev Inherit & override the `exec` function to implement arbitrary Invoker logic.
 abstract contract BaseInvoker is Auth {
     /// @notice produce a digest to sign that authorizes the invoker
