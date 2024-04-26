@@ -44,7 +44,7 @@ contract BatchInvokerTest is Test {
 
     function test_execute_withData() external {
         vm.pauseGasMetering();
-        uint256 nonce = invoker.nonce(authority.addr);
+        uint256 nonce = invoker.nextNonce(authority.addr);
 
         bytes memory data = abi.encodeWithSelector(Callee.increment.selector);
         bytes memory calls;
@@ -68,7 +68,7 @@ contract BatchInvokerTest is Test {
 
         vm.deal(authority.addr, 1 ether);
 
-        uint256 nonce = invoker.nonce(authority.addr);
+        uint256 nonce = invoker.nextNonce(authority.addr);
 
         bytes memory calls;
         calls = abi.encodePacked(AUTHCALL_IDENTIFIER, address(recipient.addr), uint256(0.5 ether), uint256(0));
@@ -90,7 +90,7 @@ contract BatchInvokerTest is Test {
 
         vm.deal(authority.addr, 6 ether);
 
-        uint256 nonce = invoker.nonce(authority.addr);
+        uint256 nonce = invoker.nextNonce(authority.addr);
 
         bytes memory data = abi.encodeWithSelector(Callee.increment.selector);
         bytes memory calls;
@@ -112,7 +112,7 @@ contract BatchInvokerTest is Test {
     function test_execute_revert_invalidSender() external {
         vm.pauseGasMetering();
 
-        uint256 nonce = invoker.nonce(authority.addr);
+        uint256 nonce = invoker.nextNonce(authority.addr);
 
         bytes memory data_1 = abi.encodeWithSelector(Callee.increment.selector);
         bytes memory data_2 = abi.encodeWithSelector(Callee.expectSender.selector, address(0));
@@ -140,7 +140,7 @@ contract BatchInvokerTest is Test {
         calls = abi.encodePacked(AUTHCALL_IDENTIFIER, recipient.addr, uint256(0.5 ether), uint256(0));
         calls = abi.encodePacked(calls, AUTHCALL_IDENTIFIER, recipient.addr, uint256(0.5 ether), uint256(0));
 
-        uint256 nonce = invoker.nonce(authority.addr);
+        uint256 nonce = invoker.nextNonce(authority.addr);
         bytes memory execData = abi.encode(nonce, calls);
 
         bytes32 hash = invoker.getDigest(execData, vm.getNonce(address(authority.addr)));
@@ -162,7 +162,7 @@ contract BatchInvokerTest is Test {
         calls = abi.encodePacked(AUTHCALL_IDENTIFIER, recipient.addr, uint256(0.5 ether), uint256(0));
         calls = abi.encodePacked(calls, AUTHCALL_IDENTIFIER, recipient.addr, uint256(0.5 ether), uint256(0));
 
-        uint256 nonce = invoker.nonce(authority.addr);
+        uint256 nonce = invoker.nextNonce(authority.addr);
         bytes memory execData = abi.encode(nonce, calls);
 
         bytes32 hash = invoker.getDigest(execData, vm.getNonce(address(authority.addr)));

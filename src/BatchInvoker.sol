@@ -17,7 +17,7 @@ import { MultiSendAuthCallOnly } from "src/MultiSendAuthCallOnly.sol";
 ///      batches are executed atomically (if one sub-call reverts, the whole batch reverts)
 contract BatchInvoker is BaseInvoker, MultiSendAuthCallOnly {
     /// @notice authority => next valid nonce
-    mapping(address => uint256) public nonce;
+    mapping(address => uint256) public nextNonce;
 
     /// @notice thrown when a Batch is executed with an invalid nonce
     /// @param authority - the signing authority
@@ -35,9 +35,9 @@ contract BatchInvoker is BaseInvoker, MultiSendAuthCallOnly {
     ///           `dataLength` as a uint256 (=> 32 bytes),
     ///           `data` as bytes.
     function exec(bytes memory execData, address authority) internal override {
-        (uint256 authorityNonce, bytes memory transactions) = abi.decode(execData, (uint256, bytes));
+        (uint256 nonce, bytes memory transactions) = abi.decode(execData, (uint256, bytes));
         // validate the nonce & increment
-        if (authorityNonce != nonce[authority]++) revert InvalidNonce(authority, authorityNonce);
+        if (nonce != nextNonce[authority]++) revert InvalidNonce(authority, nonce);
         // multiSend the transactions using AUTHCALL
         multiSend(transactions);
     }
