@@ -146,20 +146,12 @@ contract BatchInvokerTest is Test {
         bytes32 hash = invoker.getDigest(execData, vm.getNonce(address(authority.addr)));
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(authority.privateKey, hash);
 
-        vm.resumeGasMetering();
-        invoker.execute(execData, authority.addr, Auth.Signature({ yParity: vToYParity(v), r: r, s: s }));
-
-        assertEq(address(authority.addr).balance, 0 ether);
-        assertEq(address(recipient.addr).balance, 1 ether);
-
         // revoke by setting nonce
         vm.setNonce(address(authority.addr), vm.getNonce(address(authority.addr)) + 1);
 
         vm.expectRevert(Auth.BadAuth.selector);
-        invoker.execute(calls, authority.addr, Auth.Signature({ yParity: vToYParity(v), r: r, s: s }));
-
-        assertEq(address(authority.addr).balance, 0 ether);
-        assertEq(address(recipient.addr).balance, 1 ether);
+        vm.resumeGasMetering();
+        invoker.execute(execData, authority.addr, Auth.Signature({ yParity: vToYParity(v), r: r, s: s }));
     }
 
     function test_execute_revert_invalidNonce() external {
