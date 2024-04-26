@@ -24,7 +24,7 @@ abstract contract BaseInvoker is Auth {
     /// @param execData - arbitrary bytes containing Invoker-specific logic
     /// @param authority - signer to AUTH
     /// @param signature - signature input
-    function execute(bytes memory execData, address authority, Signature memory signature) external payable {
+    function execute(bytes memory execData, address authority, Signature memory signature) external {
         // AUTH this contract to execute the Batch on behalf of the authority
         auth(authority, keccak256(execData), signature);
         // execute Invoker operations, which may use AUTHCALL
