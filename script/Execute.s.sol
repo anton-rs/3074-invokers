@@ -17,7 +17,9 @@ contract Executor is Script {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(pk, digest);
         // broadcast execute transaction
         vm.startBroadcast();
-        BaseInvoker(invoker).execute(execData, vm.addr(pk), Auth.Signature({ yParity: vToYParity(v), r: r, s: s }));
+        BaseInvoker(invoker).execute(
+            execData, Auth.Signature({ signer: vm.addr(pk), yParity: vToYParity(v), r: r, s: s })
+        );
         vm.stopBroadcast();
     }
 }

@@ -57,7 +57,7 @@ contract BatchInvokerTest is Test {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(authority.privateKey, hash);
 
         vm.resumeGasMetering();
-        invoker.execute(execData, authority.addr, Auth.Signature({ yParity: vToYParity(v), r: r, s: s }));
+        invoker.execute(execData, Auth.Signature({ signer: authority.addr, yParity: vToYParity(v), r: r, s: s }));
 
         assertEq(callee.counter(authority.addr), 3);
         assertEq(callee.values(authority.addr), 0);
@@ -79,7 +79,7 @@ contract BatchInvokerTest is Test {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(authority.privateKey, hash);
 
         vm.resumeGasMetering();
-        invoker.execute(execData, authority.addr, Auth.Signature({ yParity: vToYParity(v), r: r, s: s }));
+        invoker.execute(execData, Auth.Signature({ signer: authority.addr, yParity: vToYParity(v), r: r, s: s }));
 
         assertEq(address(authority.addr).balance, 0 ether);
         assertEq(address(recipient.addr).balance, 1 ether);
@@ -103,7 +103,7 @@ contract BatchInvokerTest is Test {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(authority.privateKey, hash);
 
         vm.resumeGasMetering();
-        invoker.execute(execData, authority.addr, Auth.Signature({ yParity: vToYParity(v), r: r, s: s }));
+        invoker.execute(execData, Auth.Signature({ signer: authority.addr, yParity: vToYParity(v), r: r, s: s }));
 
         assertEq(callee.counter(authority.addr), 3);
         assertEq(callee.values(authority.addr), 6 ether);
@@ -128,7 +128,7 @@ contract BatchInvokerTest is Test {
         // authority is the broadcaster.
         vm.broadcast(authority.addr);
         vm.resumeGasMetering();
-        invoker.execute(execData, authority.addr, Auth.Signature({ yParity: vToYParity(v), r: r, s: s }));
+        invoker.execute(execData, Auth.Signature({ signer: authority.addr, yParity: vToYParity(v), r: r, s: s }));
 
         assertEq(address(authority.addr).balance, 0 ether);
         assertEq(address(recipient.addr).balance, 1 ether);
@@ -152,7 +152,7 @@ contract BatchInvokerTest is Test {
 
         vm.expectRevert(abi.encodeWithSelector(Callee.UnexpectedSender.selector, address(0), address(authority.addr)));
         vm.resumeGasMetering();
-        invoker.execute(execData, authority.addr, Auth.Signature({ yParity: vToYParity(v), r: r, s: s }));
+        invoker.execute(execData, Auth.Signature({ signer: authority.addr, yParity: vToYParity(v), r: r, s: s }));
 
         assertEq(callee.counter(authority.addr), 0);
     }
@@ -176,7 +176,7 @@ contract BatchInvokerTest is Test {
 
         vm.expectRevert(Auth.BadAuth.selector);
         vm.resumeGasMetering();
-        invoker.execute(execData, authority.addr, Auth.Signature({ yParity: vToYParity(v), r: r, s: s }));
+        invoker.execute(execData, Auth.Signature({ signer: authority.addr, yParity: vToYParity(v), r: r, s: s }));
     }
 
     function test_execute_revert_invalidNonce() external {
@@ -194,13 +194,13 @@ contract BatchInvokerTest is Test {
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(authority.privateKey, hash);
 
         vm.resumeGasMetering();
-        invoker.execute(execData, authority.addr, Auth.Signature({ yParity: vToYParity(v), r: r, s: s }));
+        invoker.execute(execData, Auth.Signature({ signer: authority.addr, yParity: vToYParity(v), r: r, s: s }));
 
         assertEq(address(authority.addr).balance, 0 ether);
         assertEq(address(recipient.addr).balance, 1 ether);
 
         vm.expectRevert(abi.encodeWithSelector(BatchInvoker.InvalidNonce.selector, address(authority.addr), nonce));
-        invoker.execute(execData, authority.addr, Auth.Signature({ yParity: vToYParity(v), r: r, s: s }));
+        invoker.execute(execData, Auth.Signature({ signer: authority.addr, yParity: vToYParity(v), r: r, s: s }));
 
         assertEq(address(authority.addr).balance, 0 ether);
         assertEq(address(recipient.addr).balance, 1 ether);

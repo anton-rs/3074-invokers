@@ -27,10 +27,11 @@ contract BatchInvoker is BaseInvoker, MultiSendAuthCallOnly {
     ///           `value` as a uint256 (=> 32 bytes),
     ///           `dataLength` as a uint256 (=> 32 bytes),
     ///           `data` as bytes.
-    function exec(bytes memory execData, address authority) internal override {
+    /// @param signature - Authority's signature over the AUTH digest committing to execData.
+    function exec(bytes memory execData, Signature memory signature) internal override {
         (uint256 nonce, bytes memory transactions) = abi.decode(execData, (uint256, bytes));
         // validate the nonce & increment
-        if (nonce != nextNonce[authority]++) revert InvalidNonce(authority, nonce);
+        if (nonce != nextNonce[signature.signer]++) revert InvalidNonce(signature.signer, nonce);
         // multiSend the transactions using AUTHCALL
         multiSend(transactions);
     }
