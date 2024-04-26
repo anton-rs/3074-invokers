@@ -1,12 +1,12 @@
 [submodule "lib/forge-std"]
 	path = lib/forge-std
 	url = https://github.com/foundry-rs/forge-std
-[submodule "forge-3074-patch"]
-	path = forge-3074-patch
-	url = https://github.com/clabby/foundry
+[submodule "lib/foundry"]
+	path = lib/foundry
+	url = git@github.com:jxom/foundry.git
 [submodule "lib/solady"]
 	path = lib/solady
 	url = https://github.com/vectorized/solady
-[submodule "solidity"]
-	path = solidity
+[submodule "lib/solidity"]
+	path = lib/solidity
 	url = https://github.com/clabby/solidity

@@ -3,11 +3,21 @@ pragma solidity ^0.8.20;
 
 import { Test, console2 } from "forge-std/Test.sol";
 import { VmSafe } from "forge-std/Vm.sol";
+import { Auth } from "../src/Auth.sol";
 import { BatchInvoker } from "../src/BatchInvoker.sol";
 import { BaseInvoker } from "../src/BaseInvoker.sol";
+import { vToYParity } from "./utils.sol";
 
 contract Callee {
     error UnexpectedSender(address expected, address actual);
+
+    mapping(address => uint256) public counter;
+    mapping(address => uint256) public values;
+
+    function increment() public payable {
+        counter[msg.sender] += 1;
+        values[msg.sender] += msg.value;
+    }
 
     function expectSender(address expected) public payable {
         if (msg.sender != expected) revert UnexpectedSender(expected, msg.sender);
@@ -18,86 +28,146 @@ contract BatchInvokerTest is Test {
     Callee public callee;
     BatchInvoker public invoker;
     VmSafe.Wallet public authority;
+    VmSafe.Wallet public recipient;
 
     uint8 AUTHCALL_IDENTIFIER = 2;
-
-    uint256 nonce = 0;
-    uint256 value = 0;
 
     function setUp() public {
         invoker = new BatchInvoker();
         callee = new Callee();
         authority = vm.createWallet("authority");
+        recipient = vm.createWallet("recipient");
         vm.label(address(invoker), "invoker");
         vm.label(address(callee), "callee");
         vm.label(authority.addr, "authority");
     }
 
-    function constructAndSignTransaction()
-        internal
-        view
-        returns (uint8 v, bytes32 r, bytes32 s, bytes memory execData)
-    {
-        bytes memory data = abi.encodeWithSelector(Callee.expectSender.selector, address(authority.addr));
-        bytes memory transactions = abi.encodePacked(AUTHCALL_IDENTIFIER, address(callee), value, data.length, data);
-        execData = abi.encode(nonce, transactions);
-        // construct batch digest & sign
-        bytes32 digest = invoker.getDigest(execData);
-        (v, r, s) = vm.sign(authority.privateKey, digest);
+    function test_execute_withData() external {
+        uint256 nonce = invoker.nonce(authority.addr);
+
+        bytes memory data = abi.encodeWithSelector(Callee.increment.selector);
+        bytes memory calls;
+        calls = abi.encodePacked(AUTHCALL_IDENTIFIER, address(callee), uint256(0), data.length, data);
+        calls = abi.encodePacked(calls, AUTHCALL_IDENTIFIER, address(callee), uint256(0), data.length, data);
+        calls = abi.encodePacked(calls, AUTHCALL_IDENTIFIER, address(callee), uint256(0), data.length, data);
+        bytes memory execData = abi.encode(nonce, calls);
+
+        bytes32 hash = invoker.getDigest(execData, vm.getNonce(address(authority.addr)));
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(authority.privateKey, hash);
+        invoker.execute(execData, authority.addr, Auth.Signature({ yParity: vToYParity(v), r: r, s: s }));
+
+        assertEq(callee.counter(authority.addr), 3);
+        assertEq(callee.values(authority.addr), 0);
     }
 
-    function test_authCall() public {
-        vm.pauseGasMetering();
-        (uint8 v, bytes32 r, bytes32 s, bytes memory execData) = constructAndSignTransaction();
-        address authrty = authority.addr;
-        vm.resumeGasMetering();
-        // this will call Callee.expectSender(authority)
-        invoker.execute(authrty, v, r, s, execData);
+    function test_execute_withValue() external {
+        vm.deal(authority.addr, 1 ether);
+
+        uint256 nonce = invoker.nonce(authority.addr);
+
+        bytes memory calls;
+        calls = abi.encodePacked(AUTHCALL_IDENTIFIER, address(recipient.addr), uint256(0.5 ether), uint256(0));
+        calls = abi.encodePacked(calls, AUTHCALL_IDENTIFIER, address(recipient.addr), uint256(0.5 ether), uint256(0));
+        bytes memory execData = abi.encode(nonce, calls);
+
+        bytes32 hash = invoker.getDigest(execData, vm.getNonce(address(authority.addr)));
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(authority.privateKey, hash);
+        invoker.execute(execData, authority.addr, Auth.Signature({ yParity: vToYParity(v), r: r, s: s }));
+
+        assertEq(address(authority.addr).balance, 0 ether);
+        assertEq(address(recipient.addr).balance, 1 ether);
     }
 
-    // invalid nonce fails
-    function test_invalidNonce() public {
-        vm.pauseGasMetering();
-        // 1 is invalid starting nonce
-        nonce = 1;
-        (uint8 v, bytes32 r, bytes32 s, bytes memory execData) = constructAndSignTransaction();
-        address authrty = authority.addr;
-        vm.expectRevert(abi.encodeWithSelector(BatchInvoker.InvalidNonce.selector, authority.addr, 1));
-        vm.resumeGasMetering();
-        invoker.execute(authrty, v, r, s, execData);
+    function test_execute_withDataAndValue() external {
+        vm.deal(authority.addr, 6 ether);
+
+        uint256 nonce = invoker.nonce(authority.addr);
+
+        bytes memory data = abi.encodeWithSelector(Callee.increment.selector);
+        bytes memory calls;
+        calls = abi.encodePacked(AUTHCALL_IDENTIFIER, address(callee), uint256(1 ether), data.length, data);
+        calls = abi.encodePacked(calls, AUTHCALL_IDENTIFIER, address(callee), uint256(2 ether), data.length, data);
+        calls = abi.encodePacked(calls, AUTHCALL_IDENTIFIER, address(callee), uint256(3 ether), data.length, data);
+        bytes memory execData = abi.encode(nonce, calls);
+
+        bytes32 hash = invoker.getDigest(execData, vm.getNonce(address(authority.addr)));
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(authority.privateKey, hash);
+        invoker.execute(execData, authority.addr, Auth.Signature({ yParity: vToYParity(v), r: r, s: s }));
+
+        assertEq(callee.counter(authority.addr), 3);
+        assertEq(callee.values(authority.addr), 6 ether);
     }
 
-    function test_authCallWithValue() public {
-        vm.pauseGasMetering();
-        value = 1 ether;
-        (uint8 v, bytes32 r, bytes32 s, bytes memory execData) = constructAndSignTransaction();
-        address authrty = authority.addr;
-        vm.resumeGasMetering();
-        // this will call Callee.expectSender(authority)
-        invoker.execute{ value: 1 ether }(authrty, v, r, s, execData);
+    function test_execute_revert_invalidSender() external {
+        uint256 nonce = invoker.nonce(authority.addr);
+
+        bytes memory data_1 = abi.encodeWithSelector(Callee.increment.selector);
+        bytes memory data_2 = abi.encodeWithSelector(Callee.expectSender.selector, address(0));
+
+        bytes memory calls;
+        calls = abi.encodePacked(AUTHCALL_IDENTIFIER, address(callee), uint256(0), data_1.length, data_1);
+        calls = abi.encodePacked(calls, AUTHCALL_IDENTIFIER, address(callee), uint256(0), data_2.length, data_2);
+        bytes memory execData = abi.encode(nonce, calls);
+
+        bytes32 hash = invoker.getDigest(execData, vm.getNonce(address(authority.addr)));
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(authority.privateKey, hash);
+
+        vm.expectRevert(abi.encodeWithSelector(Callee.UnexpectedSender.selector, address(0), address(authority.addr)));
+        invoker.execute(execData, authority.addr, Auth.Signature({ yParity: vToYParity(v), r: r, s: s }));
+
+        assertEq(callee.counter(authority.addr), 0);
     }
 
-    // fails if too little value to pass to sub-call
-    function test_tooLittleValue() public {
-        vm.pauseGasMetering();
-        value = 1 ether;
-        (uint8 v, bytes32 r, bytes32 s, bytes memory execData) = constructAndSignTransaction();
-        address authrty = authority.addr;
-        vm.expectRevert();
-        vm.resumeGasMetering();
-        invoker.execute{ value: 0.5 ether }(authrty, v, r, s, execData);
+    function test_execute_revert_revoke() external {
+        vm.deal(authority.addr, 1 ether);
+
+        bytes memory calls;
+        calls = abi.encodePacked(AUTHCALL_IDENTIFIER, recipient.addr, uint256(0.5 ether), uint256(0));
+        calls = abi.encodePacked(calls, AUTHCALL_IDENTIFIER, recipient.addr, uint256(0.5 ether), uint256(0));
+
+        uint256 nonce = invoker.nonce(authority.addr);
+        bytes memory execData = abi.encode(nonce, calls);
+
+        bytes32 hash = invoker.getDigest(execData, vm.getNonce(address(authority.addr)));
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(authority.privateKey, hash);
+
+        invoker.execute(execData, authority.addr, Auth.Signature({ yParity: vToYParity(v), r: r, s: s }));
+
+        assertEq(address(authority.addr).balance, 0 ether);
+        assertEq(address(recipient.addr).balance, 1 ether);
+
+        // revoke by setting nonce
+        vm.setNonce(address(authority.addr), vm.getNonce(address(authority.addr)) + 1);
+
+        vm.expectRevert(Auth.BadAuth.selector);
+        invoker.execute(calls, authority.addr, Auth.Signature({ yParity: vToYParity(v), r: r, s: s }));
+
+        assertEq(address(authority.addr).balance, 0 ether);
+        assertEq(address(recipient.addr).balance, 1 ether);
     }
 
-    // fails if too much value to pass to sub-call
-    function test_tooMuchValue() public {
-        vm.pauseGasMetering();
-        value = 1 ether;
-        (uint8 v, bytes32 r, bytes32 s, bytes memory execData) = constructAndSignTransaction();
-        address authrty = authority.addr;
-        vm.expectRevert(abi.encodeWithSelector(BaseInvoker.ExtraValue.selector));
-        vm.resumeGasMetering();
-        invoker.execute{ value: 2 ether }(authrty, v, r, s, execData);
-    }
+    function test_execute_revert_invalidNonce() external {
+        vm.deal(authority.addr, 1 ether);
 
-    // TODO: if subcall reverts, it reverts with the right return data (bubbles up the error)
+        bytes memory calls;
+        calls = abi.encodePacked(AUTHCALL_IDENTIFIER, recipient.addr, uint256(0.5 ether), uint256(0));
+        calls = abi.encodePacked(calls, AUTHCALL_IDENTIFIER, recipient.addr, uint256(0.5 ether), uint256(0));
+
+        uint256 nonce = invoker.nonce(authority.addr);
+        bytes memory execData = abi.encode(nonce, calls);
+
+        bytes32 hash = invoker.getDigest(execData, vm.getNonce(address(authority.addr)));
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(authority.privateKey, hash);
+
+        invoker.execute(execData, authority.addr, Auth.Signature({ yParity: vToYParity(v), r: r, s: s }));
+
+        assertEq(address(authority.addr).balance, 0 ether);
+        assertEq(address(recipient.addr).balance, 1 ether);
+
+        vm.expectRevert(abi.encodeWithSelector(BatchInvoker.InvalidNonce.selector, address(authority.addr), nonce));
+        invoker.execute(execData, authority.addr, Auth.Signature({ yParity: vToYParity(v), r: r, s: s }));
+
+        assertEq(address(authority.addr).balance, 0 ether);
+        assertEq(address(recipient.addr).balance, 1 ether);
+    }
 }

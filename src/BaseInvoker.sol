@@ -5,37 +5,32 @@ import { Auth } from "src/Auth.sol";
 
 /// @title BaseInvoker
 /// @author Anna Carroll <https://github.com/anna-carroll/3074>
+/// @author Jake Moxey <https://github.com/jxom>
 /// @notice Shared functionality for Invoker contracts to efficiently AUTH a signer, then execute arbitrary application logic.
 /// @dev To implement an Invoker contract, simply inherit BaseInvoker and override the exec function with your Invoker logic.
 abstract contract BaseInvoker is Auth {
-    /// @notice thrown when `execute` finishes with leftover value in the Invoker contract, which is unsafe as it could be spent by anyone
-    error ExtraValue();
-
     /// @notice produce a digest to sign that authorizes the invoker
     ///         to execute actions using AUTHCALL
     /// @param execData - packed bytes containing invoker-specific execution logic
+    /// @param nonce - nonce of the authority.
     /// @dev keccak256 hash of execData is used as the commit for AUTH
     /// @return digest - the payload that the authority should sign
     ///         in order to authorize the specific execData using AUTHCALL
-    function getDigest(bytes memory execData) external view returns (bytes32 digest) {
-        digest = getDigest(keccak256(execData));
+    function getDigest(bytes memory execData, uint256 nonce) external view returns (bytes32 digest) {
+        digest = getDigest(keccak256(execData), nonce);
     }
 
     /// @notice execute some action(s) on behalf of a signing authority using AUTH and AUTHCALL
-    /// @param authority - signer to AUTH
-    /// @param v - signature input
-    /// @param r - signature input
-    /// @param s - signature input
     /// @param execData - arbitrary bytes containing Invoker-specific logic
-    function execute(address authority, uint8 v, bytes32 r, bytes32 s, bytes memory execData) external payable {
+    /// @param authority - signer to AUTH
+    /// @param signature - signature input
+    function execute(bytes memory execData, address authority, Signature memory signature) external payable {
         // AUTH this contract to execute the Batch on behalf of the authority
-        auth(authority, keccak256(execData), v, r, s);
+        auth(authority, keccak256(execData), signature);
         // execute Invoker operations, which may use AUTHCALL
-        exec(authority, execData);
-        // ensure that all value passed to the transaction was passed on to sub-calls (no leftover value in invoker)
-        if (address(this).balance != 0) revert ExtraValue();
+        exec(execData, authority);
     }
 
     /// @notice override `exec` to implement Invoker-specific application logic
-    function exec(address authority, bytes memory execData) internal virtual;
+    function exec(bytes memory execData, address authority) internal virtual;
 }

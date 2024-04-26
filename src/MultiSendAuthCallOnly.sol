@@ -55,7 +55,8 @@ contract MultiSendAuthCallOnly {
                 let success := 0
                 switch operation
                 // This version does not allow regular calls
-                case 0 { revert(0, 0) } // EDITED to remove regular calls
+                case 0 { revert(0, 0) }
+                // EDITED to remove regular calls
                 // This version does not allow delegatecalls
                 case 1 { revert(0, 0) }
                 // EDITED to add Auth Call :)

@@ -4,94 +4,55 @@ pragma solidity ^0.8.20;
 import { Test, console2 } from "forge-std/Test.sol";
 import { VmSafe } from "forge-std/Vm.sol";
 import { Auth } from "../src/Auth.sol";
-
-contract AuthHarness is Auth {
-    function authHarness(address authority, bytes32 commit, uint8 v, bytes32 r, bytes32 s) external {
-        auth(authority, commit, v, r, s);
-    }
-
-    function authSimpleHarness(address authority, bytes32 commit, uint8 v, bytes32 r, bytes32 s)
-        external
-        returns (bool success)
-    {
-        return authSimple(authority, commit, v, r, s);
-    }
-
-    function authCallHarness(address to, bytes memory data, uint256 value, uint256 gasLimit) external {
-        authCall(to, data, value, gasLimit);
-    }
-}
+import { vToYParity } from "./utils.sol";
 
 contract AuthTest is Test {
-    AuthHarness public target;
+    Auth public target;
     VmSafe.Wallet public authority;
 
     function setUp() public {
-        target = new AuthHarness();
+        target = new Auth();
         authority = vm.createWallet("authority");
         vm.label(address(target), "auth");
         vm.label(authority.addr, "authority");
     }
 
-    // auth succeeds
-    function test_auth_success() external {
-        vm.pauseGasMetering();
-        bytes32 commit = keccak256("eip-3074 4ever");
-        bytes32 digest = target.getDigest(commit);
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(authority.privateKey, digest);
-        vm.resumeGasMetering();
-        bool success = target.authSimpleHarness(authority.addr, commit, v, r, s);
+    function test_auth(bytes32 commit) external {
+        uint64 nonce = vm.getNonce(address(authority.addr));
+
+        bytes32 hash = target.getDigest(commit, nonce);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(authority.privateKey, hash);
+
+        bool success = target.auth(authority.addr, commit, Auth.Signature({ yParity: vToYParity(v), r: r, s: s }));
         assertTrue(success);
     }
 
-    // auth fails if you pass the wrong commit for the signature
-    function test_authSimple_fail() external {
-        vm.pauseGasMetering();
-        // sign digest for `commit`
-        bytes32 commit = keccak256("eip-3074 4ever");
-        bytes32 digest = target.getDigest(commit);
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(authority.privateKey, digest);
-        // pass `wrongCommit` with signature over `commit`
-        bytes32 wrongCommit = keccak256("abstraction h8er");
-        vm.resumeGasMetering();
-        bool success = target.authSimpleHarness(authority.addr, wrongCommit, v, r, s);
-        assertFalse(success);
+    function test_auth_revert_invalidCommit(bytes32 commit) external {
+        uint64 nonce = vm.getNonce(address(authority.addr));
+
+        bytes32 hash = target.getDigest(commit, nonce);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(authority.privateKey, hash);
+
+        bytes32 invalidCommit = keccak256("lol");
+
+        vm.expectRevert(Auth.BadAuth.selector);
+        target.auth(authority.addr, invalidCommit, Auth.Signature({ yParity: vToYParity(v), r: r, s: s }));
     }
 
-    // fuzz: auth succeeds
-    function testFuzz_authSimple_success(bytes32 commit, uint256 privateKey) external {
-        vm.pauseGasMetering();
-        vm.assume(
-            privateKey > 0
-                && privateKey < 115792089237316195423570985008687907852837564279074904382605163141518161494337
-        );
-        bytes32 digest = target.getDigest(commit);
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(privateKey, digest);
-        address authrty = vm.addr(privateKey);
-        vm.resumeGasMetering();
-        bool success = target.authSimpleHarness(authrty, commit, v, r, s);
-        assertTrue(success);
+    function test_auth_revert_invalidAuthority(bytes32 commit) external {
+        uint64 nonce = vm.getNonce(address(authority.addr));
+
+        bytes32 hash = target.getDigest(commit, nonce);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(authority.privateKey, hash);
+
+        address invalidAuthority = address(0);
+
+        vm.expectRevert(Auth.BadAuth.selector);
+        target.auth(invalidAuthority, commit, Auth.Signature({ yParity: vToYParity(v), r: r, s: s }));
     }
 
-    // auth fails if you pass the wrong commit for the signature
-    function test_auth_BadAuth() external {
-        vm.pauseGasMetering();
-        // sign digest for `commit`
-        bytes32 commit = keccak256("eip-3074 4ever");
-        bytes32 digest = target.getDigest(commit);
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(authority.privateKey, digest);
-        // pass `wrongCommit` with signature over `commit`
-        bytes32 wrongCommit = keccak256("abstraction h8er");
-        vm.expectRevert(abi.encodeWithSelector(Auth.BadAuth.selector));
-        vm.resumeGasMetering();
-        target.authHarness(authority.addr, wrongCommit, v, r, s);
-    }
-
-    // authcall without auth reverts
-    function test_authCall_withoutAuth() external {
+    function test_authCall_revert_noAuth() external {
         vm.expectRevert();
-        target.authCallHarness(address(0), "0x", 0, 0);
+        target.authcall(address(0), "0x", 0, 0);
     }
-
-    // TODO: authCall failure - throws revert data
 }
