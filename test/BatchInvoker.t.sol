@@ -108,6 +108,31 @@ contract BatchInvokerTest is Test {
         assertEq(callee.counter(authority.addr), 3);
         assertEq(callee.values(authority.addr), 6 ether);
     }
+    
+    function test_execute_broadcastAsAuthority() external {
+        vm.pauseGasMetering();
+
+        vm.deal(authority.addr, 1 ether);
+
+        uint256 nonce = invoker.nextNonce(authority.addr);
+
+        bytes memory calls;
+        calls = abi.encodePacked(AUTHCALL_IDENTIFIER, address(recipient.addr), uint256(0.5 ether), uint256(0));
+        calls = abi.encodePacked(calls, AUTHCALL_IDENTIFIER, address(recipient.addr), uint256(0.5 ether), uint256(0));
+        bytes memory execData = abi.encode(nonce, calls);
+
+        // increment nonce by 1 as VM will consume a nonce for the AUTHCALL.
+        bytes32 hash = invoker.getDigest(execData, vm.getNonce(address(authority.addr)) + 1);
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(authority.privateKey, hash);
+
+        // authority is the broadcaster.
+        vm.broadcast(authority.addr);
+        vm.resumeGasMetering();
+        invoker.execute(execData, authority.addr, Auth.Signature({ yParity: vToYParity(v), r: r, s: s }));
+
+        assertEq(address(authority.addr).balance, 0 ether);
+        assertEq(address(recipient.addr).balance, 1 ether);
+    }
 
     function test_execute_revert_invalidSender() external {
         vm.pauseGasMetering();
