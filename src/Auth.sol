@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 /// @title Auth
 /// @author Anna Carroll <https://github.com/anna-carroll/3074>
 /// @author Jake Moxey <https://github.com/jxom>
+/// @notice Utils for EIP-3074 AUTH & AUTHCALL opcodes.
 contract Auth {
     uint8 constant MAGIC = 0x04;
 

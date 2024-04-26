@@ -7,14 +7,7 @@ import { MultiSendAuthCallOnly } from "src/MultiSendAuthCallOnly.sol";
 /// @title BatchInvoker
 /// @author Anna Carroll <https://github.com/anna-carroll/3074>
 /// @author Jake Moxey <https://github.com/jxom>
-/// @notice Example EIP-3074 Invoker contract which executes a batch of calls using AUTH and AUTHCALL.
-///         BatchInvoker enables multi-transaction flows for EOAs,
-///         such as performing an ERC-20 approve & transfer with just one signature.
-///         It also natively enables gas sponsored transactions.
-/// @dev batches are executed in sequence based on their nonce;
-///      each calls within the batch is executed in sequence based on the order it is included in the array;
-///      calls are executed non-interactively (return data from one call is not passed into the next);
-///      batches are executed atomically (if one sub-call reverts, the whole batch reverts)
+/// @notice Invoker with batched transaction execution.
 contract BatchInvoker is BaseInvoker, MultiSendAuthCallOnly {
     /// @notice authority => next valid nonce
     mapping(address => uint256) public nextNonce;

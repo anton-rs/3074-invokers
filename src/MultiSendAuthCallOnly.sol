@@ -1,10 +1,9 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity >=0.7.0 <0.9.0;
 
-// VENDORED from Gnosis Safe
-// Modified to make AUTHCALL-only instead of CALL-only
-// https://github.com/safe-global/safe-contracts/blob/main/contracts/libraries/MultiSendCallOnly.sol
-
+/// @dev VENDORED from Gnosis Safe:
+///      https://github.com/safe-global/safe-contracts/blob/main/contracts/libraries/MultiSendCallOnly.sol
+///      MODIFIED to perform AUTHCALL-only instead of CALL-only
 /**
  * @title Multi Send Call Only - Allows to batch multiple transactions into one, but only calls
  * @notice The guard logic is not required here as this contract doesn't support nested delegate calls
