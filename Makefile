@@ -30,10 +30,17 @@ build-solc-patch:
 		cp solc/solc ../../../bin/solc
 	@echo "Done, patched solc binary is located at `bin/solc` relative to the project root"
 
+.PHONY: install-huff
+install-huff:
+	@echo "Installing huff..."
+	@curl -L get.huff.sh | bash
+	@huffup
+	@echo "Done!"
+
 .PHONY: test
 test:
 	@[[ ! -a ./bin/forge ]] && make build-forge-patch || true
-	@./bin/forge test -vv
+	@./bin/forge test -vvv
 
 .PHONY: build
 build:
