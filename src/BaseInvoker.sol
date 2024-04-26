@@ -6,7 +6,7 @@ import { Auth } from "src/Auth.sol";
 /// @title BaseInvoker
 /// @author Anna Carroll <https://github.com/anna-carroll/3074>
 /// @author Jake Moxey <https://github.com/jxom>
-/// @notice Invoker contract template. 
+/// @notice Invoker contract template.
 /// @dev Inherit & override the `exec` function to implement arbitrary Invoker logic.
 abstract contract BaseInvoker is Auth {
     /// @notice produce a digest to sign that authorizes the invoker
@@ -24,7 +24,7 @@ abstract contract BaseInvoker is Auth {
     /// @param execData - arbitrary bytes containing Invoker-specific logic
     /// @param authority - signer to AUTH
     /// @param signature - signature input
-    function execute(bytes memory execData, address authority, Signature memory signature) external payable {
+    function execute(bytes memory execData, address authority, Signature memory signature) external {
         // AUTH this contract to execute the Batch on behalf of the authority
         auth(authority, keccak256(execData), signature);
         // execute Invoker operations, which may use AUTHCALL
