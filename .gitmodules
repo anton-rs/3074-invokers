@@ -9,4 +9,4 @@
 	url = https://github.com/vectorized/solady
 [submodule "lib/solidity"]
 	path = lib/solidity
-	url = https://github.com/clabby/solidity
+	url = https://github.com/enitrat/solidity
