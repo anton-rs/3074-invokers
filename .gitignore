@@ -13,8 +13,3 @@ docs/
 
 # Dotenv file
 .env
-
-# Patched `forge` bin
-bin/forge
-# Patched `solc` bin
-bin/solc

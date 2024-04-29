@@ -33,3 +33,22 @@ make build
 ```
 make test
 ```
+
+## Local Devnet Deployment
+
+### Launch Anvil
+
+```
+make anvil-prague
+```
+
+### Deploy invoker
+```
+./bin/forge script Deploy --sig "deploy()" --rpc-url $RPC_URL --private-key $PRIVATE_KEY --broadcast
+```
+
+### Test invoker
+```
+./bin/forge script Deploy --sig "signAndExecute(address,bytes)" $INVOKER_ADDRESS $EXECDATA --rpc-url $RPC_URL --private-key $PRIVATE_KEY --broadcast
+```
+

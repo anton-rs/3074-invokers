@@ -7,8 +7,7 @@ import { vToYParity } from "../test/utils.sol";
 import { Script } from "forge-std/Script.sol";
 
 contract Executor is Script {
-    // TODO: access transaction signer of forge script
-    uint256 pk;
+    uint256 pk = vm.envUint("PRIVATE_KEY");
 
     function signAndExecute(address invoker, bytes memory execData) public {
         // construct the digest from execData
