@@ -59,7 +59,7 @@ contract MultiSendAuthCallOnly {
                 // This version does not allow delegatecalls
                 case 1 { revert(0, 0) }
                 // EDITED to add Auth Call :)
-                case 2 { success := authcall(gas(), to, value, 0, data, dataLength, 0, 0) }
+                case 2 { success := authcall(gas(), to, value, data, dataLength, 0, 0) }
                 if eq(success, 0) {
                     let errorLength := returndatasize()
                     returndatacopy(0, 0, errorLength)

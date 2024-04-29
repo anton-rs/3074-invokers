@@ -55,7 +55,7 @@ contract Auth {
     /// @custom:reverts with the sub-call revert data if the AUTHCALL fails
     function authcall(address to, bytes memory data, uint256 value, uint256 gasLimit) public returns (bool success) {
         assembly {
-            success := authcall(gasLimit, to, value, 0, add(data, 0x20), mload(data), 0, 0)
+            success := authcall(gasLimit, to, value, add(data, 0x20), mload(data), 0, 0)
             if iszero(success) {
                 returndatacopy(0, 0, returndatasize())
                 revert(0, returndatasize())
