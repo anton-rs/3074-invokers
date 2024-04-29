@@ -44,11 +44,22 @@ make anvil-prague
 
 ### Deploy invoker
 ```
-./bin/forge script Deploy --sig "deploy()" --rpc-url $RPC_URL --private-key $PRIVATE_KEY --broadcast
+./bin/forge script Deploy --sig "deploy()" --rpc-url $RPC_URL --private-key $EXECUTOR_PRIVATE_KEY --broadcast
 ```
 
 ### Test invoker
+Get the byte-encoded calls you want to execute. This example shows simply sending 1 ETH to 0xDeaDbeef.
 ```
-./bin/forge script Deploy --sig "signAndExecute(address,bytes)" $INVOKER_ADDRESS $EXECDATA --rpc-url $RPC_URL --private-key $PRIVATE_KEY --broadcast
+./bin/forge script Executor --sig "encodeCalls(bytes,address,uint256,bytes)" --rpc-url $RPC_URL --broadcast 0x 0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF 1ether 0x
+```
+
+Copy the output from `encodeCalls` above into `<transaction-bytes>`.
+```
+./bin/forge script Executor --sig "signAndExecute(address,bytes)" $INVOKER_ADDRESS <transactions-bytes> --rpc-url $RPC_URL --private-key $EXECUTOR_PRIVATE_KEY --broadcast
+```
+
+Check on the execution results, it should output `1000000000000000000`.
+```
+./bin/cast balance 0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF
 ```
 
