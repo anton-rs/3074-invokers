@@ -53,7 +53,7 @@ make anvil-prague
 Send eth
 
 ```shell
-bin/forge script Executor --sig "sendEth(address,address,uint256)" $INVOKER_ADDRESS 0x3074ca113074ca113074ca113074ca113074ca11 0.01ether --rpc-url $RPC_URL --private-key $EXECUTOR_PRIVATE_KEY --broadcast
+bin/forge script Executor --sig "sendEth(address,address,uint256)" $INVOKER_ADDRESS 0x3074ca113074ca113074ca113074ca113074ca11 0.01ether --rpc-url $RPC_URL --broadcast
 ```
 
 ## 3074-Compatible Networks
