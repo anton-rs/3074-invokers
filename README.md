@@ -18,19 +18,19 @@ This repository contains patches (h/t @clabby) of the following repositories to 
 
 ## Installation
 
-```
+```shell
 git submodule update --init --recursive && make
 ```
 
 ## Building Contracts
 
-```
+```shell
 make build
 ```
 
 ## Running Tests
 
-```
+```shell
 make test
 ```
 
@@ -38,29 +38,22 @@ make test
 
 ### Launch Anvil
 
-```
+```shell
 make anvil-prague
 ```
 
 ### Deploy invoker
-```
+
+```shell
 ./bin/forge script Deploy --sig "deploy()" --rpc-url $RPC_URL --private-key $EXECUTOR_PRIVATE_KEY --broadcast
 ```
 
 ### Test invoker
-Get the byte-encoded calls you want to execute. This example shows simply sending 1 ETH to 0xDeaDbeef.
-```
-./bin/forge script Executor --sig "encodeCalls(bytes,address,uint256,bytes)" --rpc-url $RPC_URL --broadcast 0x 0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF 1ether 0x
-```
 
-Copy the output from `encodeCalls` above into `<transaction-bytes>`.
-```
-./bin/forge script Executor --sig "signAndExecute(address,bytes)" $INVOKER_ADDRESS <transactions-bytes> --rpc-url $RPC_URL --private-key $EXECUTOR_PRIVATE_KEY --broadcast
-```
+Send eth
 
-Check on the execution results, it should output `1000000000000000000`.
-```
-cast balance 0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF --rpc-url $RPC_URL
+```shell
+bin/forge script Executor --sig "sendEth(address,address,uint256)" $INVOKER_ADDRESS 0x3074ca113074ca113074ca113074ca113074ca11 0.01ether --rpc-url $RPC_URL --private-key $EXECUTOR_PRIVATE_KEY --broadcast
 ```
 
 ## 3074-Compatible Networks
