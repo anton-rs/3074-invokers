@@ -1,4 +1,4 @@
-all: build-forge-patch build-anvil-patch build-solc-patch
+all: build-forge-patch build-solc-patch build-anvil-patch 
 
 .PHONY: build-anvil-patch
 build-anvil-patch:
