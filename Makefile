@@ -1,4 +1,4 @@
-all: build-forge-patch build-cast-patch build-anvil-patch build-solc-patch
+all: build-forge-patch build-anvil-patch build-solc-patch
 
 .PHONY: build-anvil-patch
 build-anvil-patch:
@@ -8,15 +8,6 @@ build-anvil-patch:
 		mkdir -p ../../bin && \
 		cp target/release/anvil ../../bin/anvil
 	@echo "Done, patched anvil binary is located at `bin/anvil` relative to the project root"
-
-.PHONY: build-cast-patch
-build-cast-patch:
-	@echo "Building cast patch..."
-	@cd lib/foundry && \
-		cargo build --bin cast --release && \
-		mkdir -p ../../bin && \
-		cp target/release/cast ../../bin/cast
-	@echo "Done, patched cast binary is located at `bin/cast` relative to the project root"
 
 .PHONY: build-forge-patch
 build-forge-patch:

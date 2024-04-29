@@ -60,7 +60,7 @@ Copy the output from `encodeCalls` above into `<transaction-bytes>`.
 
 Check on the execution results, it should output `1000000000000000000`.
 ```
-./bin/cast balance 0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF
+cast balance 0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF --rpc-url $RPC_URL
 ```
 
 ## 3074-Compatible Networks
