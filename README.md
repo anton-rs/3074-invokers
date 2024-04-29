@@ -63,3 +63,9 @@ Check on the execution results, it should output `1000000000000000000`.
 ./bin/cast balance 0xDeaDbeefdEAdbeefdEadbEEFdeadbeEFdEaDbeeF
 ```
 
+## 3074-Compatible Networks
+
+### Otim Hosted Devnet
+
+Powered by [Reth Alphanet](https://github.com/paradigmxyz/alphanet), check out Otim's [3074 devnet docs](https://docs.otim.xyz) for detailed information on how to set up the network, get devnet ETH, use the deployed `BatchInvoker`, and more.
+
