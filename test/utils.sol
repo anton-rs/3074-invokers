@@ -8,3 +8,7 @@ function vToYParity(uint8 v) pure returns (uint8 yParity_) {
         default { yParity_ := mod(sub(v, 35), 2) }
     }
 }
+
+function packCalls(bytes memory prevCalls, address to, uint256 value, bytes memory data) pure returns (bytes memory calls) {
+    return abi.encodePacked(prevCalls, uint8(2), to, value, data.length, data);
+}
