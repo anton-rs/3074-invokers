@@ -1,4 +1,4 @@
-all: build-forge-patch build-anvil-patch build-solc-patch
+all: build-forge-patch build-solc-patch build-anvil-patch 
 
 .PHONY: build-anvil-patch
 build-anvil-patch:
@@ -49,3 +49,8 @@ fmt:
 snapshot:
 	@[[ ! -a ./bin/forge ]] && make build-forge-patch || true
 	@./bin/forge snapshot
+
+.PHONY: anvil-prague
+anvil-prague:
+	@[[ ! -a ./bin/anvil ]] && make build-anvil-patch || true
+	@./bin/anvil --hardfork prague
