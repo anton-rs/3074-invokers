@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: Unlicensed
+// SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity ^0.8.20;
 
 function vToYParity(uint8 v) pure returns (uint8 yParity_) {
