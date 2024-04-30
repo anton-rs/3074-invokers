@@ -60,5 +60,5 @@ bin/forge script Executor --sig "sendEth(address,address,uint256)" $INVOKER_ADDR
 
 ### Otim Hosted Devnet
 
-Powered by [Reth Alphanet](https://github.com/paradigmxyz/alphanet), check out Otim's [3074 devnet docs](https://docs.otim.xyz) for detailed information on how to set up the network, get devnet ETH, use the deployed `BatchInvoker`, and more.
+Powered by [Reth AlphaNet](https://github.com/paradigmxyz/alphanet), check out Otim's [3074 devnet docs](https://docs.otim.xyz) for detailed information on how to set up the network, get devnet ETH, use the deployed `BatchInvoker`, and more.
 
