@@ -8,52 +8,70 @@ Generalized [EIP-3074](https://eips.ethereum.org/EIPS/eip-3074) Invokers.
 > [!WARNING] 
 > WIP. Very experimental, not audited, use with caution.
 
-## Patches
+## Development
 
-This repository contains patches (h/t @clabby) of the following repositories to support EIP-3074 opcodes:
+Developing with these contracts currently requires [`foundry-alphanet`](https://github.com/paradigmxyz/foundry-alphanet) – a repository containing patches for [Foundry](https://github.com/foundry-rs/foundry) to support EIP-3074 opcodes.
 
-- [`revm`](https://github.com/wevm/revm/tree/jxom/eip-3074)
-- [`foundry`](https://github.com/wevm/foundry/tree/jxom/eip-3074)
-- [`solc`](https://github.com/clabby/solidity/tree/cl/eip-3074)
+We have abstracted `foundry-alphanet` docker image execution into a set of Makefile scripts listed below.
 
-## Installation
+### Installation
+
+First, we will need to set up the submodules for the repository.
 
 ```shell
-git submodule update --init --recursive && make
+make install
 ```
 
-## Building Contracts
+### Building Contracts
+
+We can build the contracts using `forge build` via `foundry-alphanet`:
 
 ```shell
-make build
+make cmd="forge build"
 ```
 
-## Running Tests
+### Running Tests
+
+We can run tests using `forge test` via `foundry-alphanet`:
 
 ```shell
-make test
+make cmd="forge test"
 ```
 
-## Local Devnet Deployment
+### Launch a Local Network
 
-### Launch Anvil
+We can launch an Anvil instance using `anvil` via `foundry-alphanet`:
 
 ```shell
-make anvil-prague
+make cmd="anvil"
 ```
 
-### Deploy invoker
+### Deploying Invoker Contracts
+
+Below, we will deploy the `BatchInvoker` contract to a local Anvil network.
+
+#### 1. Launch Anvil
+
+First, we will need to launch an Anvil instance. If you are deploying to a launched network, you can skip this step.
 
 ```shell
-./bin/forge script Deploy --sig "deploy()" --rpc-url $RPC_URL --private-key $EXECUTOR_PRIVATE_KEY --broadcast
+make cmd="anvil"
 ```
 
-### Test invoker
+#### 2. Deploy Invoker
 
-Send eth
+Deploy the `BatchInvoker` contract to the network.
 
 ```shell
-bin/forge script Executor --sig "sendEth(address,address,uint256)" $INVOKER_ADDRESS 0x3074ca113074ca113074ca113074ca113074ca11 0.01ether --rpc-url $RPC_URL --broadcast
+make cmd="forge script Deploy --sig 'deploy()' --rpc-url $RPC_URL --private-key $EXECUTOR_PRIVATE_KEY --broadcast"
+```
+
+#### 3. Test Invoker
+
+We can test the `BatchInvoker` by sending a transaction via the contract.
+
+```shell
+make cmd="forge script Executor --sig 'sendEth(address,address,uint256)' $INVOKER_ADDRESS 0x3074ca113074ca113074ca113074ca113074ca11 0.01ether --rpc-url $RPC_URL --broadcast"
 ```
 
 ## 3074-Compatible Networks
