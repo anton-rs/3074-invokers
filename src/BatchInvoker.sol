@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity ^0.8.20;
 
-import { BaseInvoker } from "src/BaseInvoker.sol";
-import { MultiSendAuthCallOnly } from "src/MultiSendAuthCallOnly.sol";
+import { BaseInvoker } from "./BaseInvoker.sol";
+import { MultiSendAuthCallOnly } from "./MultiSendAuthCallOnly.sol";
 
 /// @title BatchInvoker
 /// @author Anna Carroll <https://github.com/anna-carroll/3074>
