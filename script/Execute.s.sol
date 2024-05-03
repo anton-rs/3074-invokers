@@ -12,6 +12,7 @@ contract Executor is Script, Test {
     uint256 apk = vm.envUint("AUTHORITY_PRIVATE_KEY");
     uint256 epk = vm.envUint("EXECUTOR_PRIVATE_KEY");
 
+    // script that signs auth message and calls `execute` on invoker
     function signAndExecute(address invoker, bytes memory execData) public {
         // construct the digest from execData
         bytes32 digest = BaseInvoker(invoker).getDigest(execData, vm.getNonce(vm.addr(apk)));

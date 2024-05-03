@@ -66,6 +66,8 @@ Deploy the `BatchInvoker` contract to the network.
 make cmd="forge script Deploy --sig 'deploy()' --rpc-url $RPC_URL --private-key $EXECUTOR_PRIVATE_KEY --broadcast"
 ```
 
+**Note:** if the `$RPC_URL` you're pointing to is on host, you should use http://host.docker.internal:8545 instead of http://localhost:8545. See Docker's networking docs [here](https://docs.docker.com/desktop/networking/#i-want-to-connect-from-a-container-to-a-service-on-the-host).
+
 #### 3. Test Invoker
 
 We can test the `BatchInvoker` by sending a transaction via the contract.
