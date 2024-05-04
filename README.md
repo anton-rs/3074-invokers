@@ -63,7 +63,7 @@ make cmd="anvil"
 Deploy the `BatchInvoker` contract to the network.
 
 ```shell
-make cmd="forge script Deploy --sig 'deploy()' --rpc-url $RPC_URL --private-key $EXECUTOR_PRIVATE_KEY --broadcast"
+make cmd="forge script Deploy --sig deploy() --rpc-url $RPC_URL --private-key $EXECUTOR_PRIVATE_KEY --broadcast"
 ```
 
 **Note:** if the `$RPC_URL` you're pointing to is on host, you should use http://host.docker.internal:8545 instead of http://localhost:8545. See Docker's networking docs [here](https://docs.docker.com/desktop/networking/#i-want-to-connect-from-a-container-to-a-service-on-the-host).
@@ -73,7 +73,7 @@ make cmd="forge script Deploy --sig 'deploy()' --rpc-url $RPC_URL --private-key 
 We can test the `BatchInvoker` by sending a transaction via the contract.
 
 ```shell
-make cmd="forge script Executor --sig 'sendEth(address,address,uint256)' $INVOKER_ADDRESS 0x3074ca113074ca113074ca113074ca113074ca11 0.01ether --rpc-url $RPC_URL --broadcast"
+make cmd="forge script Executor --sig sendEth(address,address,uint256) $INVOKER_ADDRESS 0x3074ca113074ca113074ca113074ca113074ca11 0.01ether --rpc-url $RPC_URL --broadcast"
 ```
 
 ## 3074-Compatible Networks
