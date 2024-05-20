@@ -48,7 +48,6 @@ contract Executor is Script, Test {
     function test_fork_sendEth() public {
         // set up fork, skip if localhost or docker.internal
         string memory rpcUrl = vm.envString("RPC_URL");
-
         if (bytes(rpcUrl).length > 0 && (LibString.contains(rpcUrl, "localhost") || LibString.contains(rpcUrl, "docker.internal"))) {
             return;
         }
