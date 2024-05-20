@@ -6,7 +6,7 @@ import { BatchInvoker } from "../src/BatchInvoker.sol";
 
 contract Deploy is Script {
     // deploy:
-    // make cmd="forge script Deploy --sig 'deploy()' --rpc-url $RPC_URL --private-key $EXECUTOR_PRIVATE_KEY --broadcast"
+    // make cmd="forge script Deploy --sig deploy() --rpc-url $RPC_URL --private-key $EXECUTOR_PRIVATE_KEY --broadcast"
     function deploy() public {
         vm.broadcast();
         new BatchInvoker();

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 pragma solidity ^0.8.20;
 
-import { Auth } from "src/Auth.sol";
+import { Auth } from "./Auth.sol";
 
 /// @title BaseInvoker
 /// @author Anna Carroll <https://github.com/anna-carroll/3074>

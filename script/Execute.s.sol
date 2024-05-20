@@ -7,6 +7,7 @@ import { BatchInvoker } from "../src/BatchInvoker.sol";
 import { vToYParity, packCalls } from "../test/utils.sol";
 import { Script } from "forge-std/Script.sol";
 import { Test } from "forge-std/Test.sol";
+import { LibString } from "solady/utils/LibString.sol";
 
 contract Executor is Script, Test {
     uint256 apk = vm.envUint("AUTHORITY_PRIVATE_KEY");
@@ -42,5 +43,28 @@ contract Executor is Script, Test {
         uint256 balanceBefore = recipient.balance;
         call(invoker, recipient, value, "");
         assertEq(recipient.balance, balanceBefore + value);
+    }
+
+    function test_fork_sendEth() public {
+        // set up fork, skip if localhost or docker.internal
+        string memory rpcUrl = vm.envString("RPC_URL");
+        if (bytes(rpcUrl).length > 0 && (LibString.contains(rpcUrl, "localhost") || LibString.contains(rpcUrl, "docker.internal"))) {
+            return;
+        }
+        uint256 forkId = vm.createFork(rpcUrl);
+        vm.selectFork(forkId);
+
+        // deploy batchinvoker
+        BatchInvoker invoker = new BatchInvoker();
+        // send 10 eth to authority
+        vm.broadcast(epk);
+        address authority = vm.addr(apk);
+        authority.call{value: 10 ether}("");
+        assertEq(authority.balance, 10 ether);
+
+        // send 1 eth to 0x3074 via invoker
+        sendEth(address(invoker), address(0x3074), 1 ether);
+        assertEq(address(0x3074).balance, 1 ether);
+        assertEq(authority.balance, 9 ether);
     }
 }
